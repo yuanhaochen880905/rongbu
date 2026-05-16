@@ -36,6 +36,10 @@
         .category-btn.active {
           @apply bg-secondary text-white font-medium;
         }
+        /* 视频卡片样式 */
+        .video-card {
+          @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer;
+        }
       }
     </style>
   </head>
@@ -63,11 +67,14 @@
           <button class="category-btn active" onclick="filter('all')">
             全部
           </button>
-          <button class="category-btn" onclick="filter('type1')">加工工艺</button>
+          <button class="category-btn" onclick="filter('type1')">
+            加工工艺
+          </button>
           <button class="category-btn" onclick="filter('type3')">绒布</button>
+          <button class="category-btn" onclick="filter('type4')">视频</button>
         </div>
 
-        <!-- 产品布局：电脑3个 / 手机2个 -->
+        <!-- 产品/视频布局容器 -->
         <div
           id="productList"
           class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
@@ -90,7 +97,10 @@
             <p class="mb-2">
               <i class="fa-solid fa-phone mr-2"></i> 电话:133 6055 9947
             </p>
-            <p><i class="fa-solid fa-envelope mr-2"></i> 邮箱：yuansiping@zumar.com.cn</p>
+            <p>
+              <i class="fa-solid fa-envelope mr-2"></i>
+              邮箱:yuansiping@zumar.com.cn
+            </p>
           </div>
           <div>
             <h3 class="text-lg font-bold mb-3"></h3>
@@ -110,7 +120,7 @@
       </div>
     </footer>
 
-    <!-- 产品弹窗（支持显示1张或2张图片） -->
+    <!-- 产品/视频弹窗 -->
     <div
       id="modal"
       class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4"
@@ -129,9 +139,10 @@
     </div>
 
     <script>
-      // ====================== 在这里改你的产品 ======================
+      // 产品数据（不含视频）
       const products = [
-    {  id: 1,
+        {
+          id: 1,
           title: "绒布压花工艺",
           type: "type1",
           intro: "压花工艺",
@@ -270,52 +281,131 @@
         },
       ];
 
-      // 加载所有产品
+      // 视频数据（单独定义，type为type4）
+      const videos = [
+        {
+          id: 101, // 视频ID从100开始，避免和产品ID冲突
+          title: "压花工艺展示",
+          type: "type4",
+          intro: "",
+          detail: "",
+          videoUrl:
+            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/01aa78462599910fc15bcc8fe3365886_raw.mp4", // 替换为你的视频地址
+          coverImg:
+            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/8a6aaa187ed13646b5471c06c6d21d30.jpg", // 视频封面图
+        },
+        // 可添加更多视频
+      ];
+
+      // 页面加载时渲染全部产品（不含视频）
       document.addEventListener("DOMContentLoaded", () => render(products));
 
-      // 渲染页面
-      function render(list) {
+      // 渲染页面（区分产品和视频）
+      function render(list, isVideo = false) {
+        const container = document.getElementById("productList");
         let html = "";
-        list.forEach((p) => {
-          html += `
-            <div class="product-card" onclick="openModal(${p.id})">
-                <img src="${p.img1}" class="h-44 w-full object-cover">
-                <div class="p-4">
-                    <h3 class="font-bold text-lg mb-1">${p.title || "未命名产品"}</h3>
-                    <p class="text-sm text-gray-600 line-clamp-2">${p.intro}</p>
-                </div>
-            </div>`;
-        });
-        document.getElementById("productList").innerHTML = html;
+
+        // 如果是视频分类，设置手机端一行一列布局
+        if (isVideo) {
+          container.className =
+            "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6";
+
+          // 渲染视频卡片
+          list.forEach((v) => {
+            html += `
+              <div class="video-card" onclick="openModal(${v.id})">
+                  <div class="relative h-44 w-full">
+                    <img src="${v.coverImg}" class="h-full w-full object-cover">
+                    <!-- 视频播放图标 -->
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <i class="fa-solid fa-play text-white text-4xl"></i>
+                    </div>
+                  </div>
+                  <div class="p-4">
+                      <h3 class="font-bold text-lg mb-1">${v.title || "未命名视频"}</h3>
+                      <p class="text-sm text-gray-600 line-clamp-2">${v.intro}</p>
+                  </div>
+              </div>`;
+          });
+        } else {
+          // 恢复产品默认布局
+          container.className =
+            "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
+
+          // 渲染产品卡片
+          list.forEach((p) => {
+            html += `
+              <div class="product-card" onclick="openModal(${p.id})">
+                  <img src="${p.img1}" class="h-44 w-full object-cover">
+                  <div class="p-4">
+                      <h3 class="font-bold text-lg mb-1">${p.title || "未命名产品"}</h3>
+                      <p class="text-sm text-gray-600 line-clamp-2">${p.intro}</p>
+                  </div>
+              </div>`;
+          });
+        }
+
+        container.innerHTML = html;
       }
 
       // 分类筛选
       function filter(type) {
+        // 移除所有按钮的active状态
         document
           .querySelectorAll(".category-btn")
           .forEach((b) => b.classList.remove("active"));
+        // 给当前点击的按钮添加active状态
         event.target.classList.add("active");
-        const list =
-          type === "all" ? products : products.filter((p) => p.type === type);
-        render(list);
+
+        if (type === "all") {
+          // 全部分类只显示产品，不显示视频
+          render(products);
+        } else if (type === "type4") {
+          // 视频分类只显示视频，并且标记为视频渲染模式
+          render(videos, true);
+        } else {
+          // 其他分类筛选对应产品
+          const filteredProducts = products.filter((p) => p.type === type);
+          render(filteredProducts);
+        }
       }
 
-      // 打开弹窗（支持显示1张或2张图片）
+      // 打开弹窗（支持产品和视频）
       function openModal(id) {
-        const p = products.find((x) => x.id === id);
-        let imageHtml = `<img src="${p.img1}" class="rounded-lg w-full h-auto object-cover" alt="${p.title}">`;
+        // 先查找产品
+        let item = products.find((x) => x.id === id);
+        let isVideoItem = false;
 
-        // 如果有第二张图片且图片地址不为空，添加第二张图片
-        if (p.img2 && p.img2.trim() !== "") {
-          imageHtml += `<img src="${p.img2}" class="rounded-lg w-full h-auto object-cover mt-3" alt="${p.title}-详情">`;
+        // 如果不是产品，查找视频
+        if (!item) {
+          item = videos.find((x) => x.id === id);
+          isVideoItem = true;
         }
 
-        document.getElementById("modalContent").innerHTML = `
-            <h2 class="text-xl font-bold mb-3">${p.title || "未命名产品"}</h2>
-            <p class="mb-4 text-gray-600">${p.detail}</p>
-            <div class="grid grid-cols-1 gap-3">
-                ${imageHtml}
+        if (!item) return;
+
+        let contentHtml = `<h2 class="text-xl font-bold mb-3">${item.title || "未命名内容"}</h2>`;
+        contentHtml += `<p class="mb-4 text-gray-600">${item.detail || "暂无详细介绍"}</p>`;
+
+        if (isVideoItem) {
+          // 视频弹窗内容
+          contentHtml += `
+            <div class="w-full">
+              <video controls class="rounded-lg w-full h-auto">
+                <source src="${item.videoUrl}" type="video/mp4">
+                您的浏览器不支持HTML5视频播放，请升级浏览器。
+              </video>
             </div>`;
+        } else {
+          // 产品弹窗内容（图片）
+          let imageHtml = `<img src="${item.img1}" class="rounded-lg w-full h-auto object-cover" alt="${item.title}">`;
+          if (item.img2 && item.img2.trim() !== "") {
+            imageHtml += `<img src="${item.img2}" class="rounded-lg w-full h-auto object-cover mt-3" alt="${item.title}-详情">`;
+          }
+          contentHtml += `<div class="grid grid-cols-1 gap-3">${imageHtml}</div>`;
+        }
+
+        document.getElementById("modalContent").innerHTML = contentHtml;
         document.getElementById("modal").style.display = "flex";
         document.body.style.overflow = "hidden";
       }
