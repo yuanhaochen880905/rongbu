@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>广州鼎昌贸易商行</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#E0F7FA", // 清水蓝（底色 舒服）
+              secondary: "#4DD0E1", // 捣蓝色（主色 清爽）
+              light: "#F5FCFF",
+              text: "#263238",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style type="text/tailwindcss">
+      @layer utilities {
+        .product-card {
+          @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer;
+        }
+        .category-btn {
+          @apply px-5 py-3 rounded-full bg-white hover:bg-secondary/20 transition-colors;
+        }
+        .category-btn.active {
+          @apply bg-secondary text-white font-medium;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-primary text-text min-h-screen">
+    <!-- 顶部介绍 -->
+    <header class="py-12 px-4 bg-secondary/20">
+      <div class="max-w-6xl mx-auto text-center">
+        <h1 class="text-2xl md:text-4xl font-bold mb-4">广州鼎昌贸易商行</h1>
+        <span>📜 匠心皮料 · Crafted Leather</span>
+        <span>🎩 质感匠艺 · Texture Master</span>
+        <span>🌿 经久耐用 · Durable & Timeless</span>
+      </div>
+    </header>
+
+    <!-- 产品 + 分类 -->
+    <main class="py-14 px-4">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-xl md:text-2xl font-semibold text-center mb-4">
+          精品推荐
+        </h2>
+
+        <!-- 分类 -->
+        <div class="flex justify-center flex-wrap gap-3 my-6">
+          <button class="category-btn active" onclick="filter('all')">
+            全部
+          </button>
+          <button class="category-btn" onclick="filter('type1')">加工工艺</button>
+          <button class="category-btn" onclick="filter('type3')">绒布</button>
+        </div>
+
+        <!-- 产品布局：电脑3个 / 手机2个 -->
+        <div
+          id="productList"
+          class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
+        ></div>
+      </div>
+    </main>
+
+    <!-- 底部：地址 电话 微信 -->
+    <footer class="bg-secondary/20 py-10 px-4">
+      <div class="max-w-6xl mx-auto">
+        <div
+          class="md:flex justify-between items-center gap-8 text-center md:text-left"
+        >
+          <div>
+            <h3 class="text-lg font-bold mb-3">联系我们</h3>
+            <p class="mb-2">
+              <i class="fa-solid fa-location-dot mr-2"></i>
+              地址:中国 · 广州市南沙区环盛街2号2107室
+            </p>
+            <p class="mb-2">
+              <i class="fa-solid fa-phone mr-2"></i> 电话:133 6055 9947
+            </p>
+            <p><i class="fa-solid fa-envelope mr-2"></i> 邮箱：xxx@163.com</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold mb-3"></h3>
+            <div class="bg-white p-2 rounded-lg inline-block">
+              <img
+                src="https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20260407200128_188_12.png"
+                alt="微信二维码"
+                class="w-28 h-28 object-cover"
+              />
+            </div>
+            <p class="mt-2 text-sm">扫码添加微信了解更多</p>
+          </div>
+        </div>
+        <div class="mt-8 text-center text-sm opacity-70">
+          © 2025 广州鼎昌贸易商行 | 工作时间 10:00-18:00
+        </div>
+      </div>
+    </footer>
+
+    <!-- 产品弹窗（支持显示1张或2张图片） -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4"
+    >
+      <div
+        class="bg-primary rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 relative"
+      >
+        <button
+          onclick="closeModal()"
+          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white"
+        >
+          ✕
+        </button>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script>
+      // ====================== 在这里改你的产品 ======================
+      const products = [
+    {  id: 1,
+          title: "绒布压花工艺",
+          type: "type1",
+          intro: "压花工艺",
+          detail: "适合做鞋子,箱包,衣服,抱枕,沙发",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/c7c7503b59b03b4ae6ab30edbfb7967e.jpg",
+          img2: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/d80d6c1f70a1e64c4bb1022cb664f1fe.jpg",
+        },
+        {
+          id: 2,
+          title: "150g麂皮绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/150g%E9%BA%82%E7%9A%AE%E7%BB%92.jpg",
+        },
+        {
+          id: 3,
+          title: "仿毛绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E4%BB%BF%E6%AF%9B%E7%BB%92.jpg",
+        },
+        {
+          id: 4,
+          title: "金丝绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E9%87%91%E4%B8%9D%E7%BB%92.jpg",
+        },
+        {
+          id: 5,
+          title: "200g空气层",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/200g%E7%A9%BA%E6%B0%94%E5%B1%82.jpg",
+        },
+        {
+          id: 6,
+          title: "330g牛皮绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/330g%E7%89%9B%E7%9A%AE%E7%BB%92.jpg",
+        },
+        {
+          id: 7,
+          title: "氨纶超弹",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E6%B0%A8%E7%BA%B6%E8%B6%85%E5%BC%B9.jpg",
+        },
+        {
+          id: 8,
+          title: "百丽绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%99%BE%E4%B8%BD%E7%BB%92.jpg",
+        },
+        {
+          id: 9,
+          title: "五枚缎",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E4%BA%94%E6%9E%9A%E7%BC%8E.jpg",
+        },
+        {
+          id: 10,
+          title: "羊津绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E6%B4%A5%E7%BB%92.jpg",
+        },
+        {
+          id: 11,
+          title: "羊筋绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E7%AD%8B%E7%BB%92.jpg",
+        },
+        {
+          id: 12,
+          title: "羊皮绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E7%9A%AE%E7%BB%92.jpg",
+        },
+        {
+          id: 13,
+          title: "珍珠绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%8F%8D%E7%8F%A0%E7%BB%92.jpg",
+        },
+        {
+          id: 14,
+          title: "真超羊皮绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%9C%9F%E8%B6%85%E7%BE%8A%E7%9A%AE%E7%BB%92.jpg",
+        },
+        {
+          id: 15,
+          title: "1mm水晶绒",
+          type: "type3",
+          intro: "",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/1mm%E6%B0%B4%E6%99%B6%E7%BB%92.jpg",
+        },
+        {
+          id: 16,
+          title: "佳积布",
+          type: "type3",
+          intro: "110g",
+          detail: "更多颜色可选,欢迎咨询",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/3a888370d04ee5990342e24ffff6f1cb.jpg",
+          img2: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/0e9a0be307597e0f433e52ab2d495486.jpg",
+        },
+        {
+          id: 17,
+          title: "100g磨砂绒",
+          type: "type3",
+          intro: "产品简短介绍一句话。",
+          detail: "",
+          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/100g%E7%A3%A8%E7%A0%82%E7%BB%92.jpg",
+        },
+      ];
+
+      // 加载所有产品
+      document.addEventListener("DOMContentLoaded", () => render(products));
+
+      // 渲染页面
+      function render(list) {
+        let html = "";
+        list.forEach((p) => {
+          html += `
+            <div class="product-card" onclick="openModal(${p.id})">
+                <img src="${p.img1}" class="h-44 w-full object-cover">
+                <div class="p-4">
+                    <h3 class="font-bold text-lg mb-1">${p.title || "未命名产品"}</h3>
+                    <p class="text-sm text-gray-600 line-clamp-2">${p.intro}</p>
+                </div>
+            </div>`;
+        });
+        document.getElementById("productList").innerHTML = html;
+      }
+
+      // 分类筛选
+      function filter(type) {
+        document
+          .querySelectorAll(".category-btn")
+          .forEach((b) => b.classList.remove("active"));
+        event.target.classList.add("active");
+        const list =
+          type === "all" ? products : products.filter((p) => p.type === type);
+        render(list);
+      }
+
+      // 打开弹窗（支持显示1张或2张图片）
+      function openModal(id) {
+        const p = products.find((x) => x.id === id);
+        let imageHtml = `<img src="${p.img1}" class="rounded-lg w-full h-auto object-cover" alt="${p.title}">`;
+
+        // 如果有第二张图片且图片地址不为空，添加第二张图片
+        if (p.img2 && p.img2.trim() !== "") {
+          imageHtml += `<img src="${p.img2}" class="rounded-lg w-full h-auto object-cover mt-3" alt="${p.title}-详情">`;
+        }
+
+        document.getElementById("modalContent").innerHTML = `
+            <h2 class="text-xl font-bold mb-3">${p.title || "未命名产品"}</h2>
+            <p class="mb-4 text-gray-600">${p.detail}</p>
+            <div class="grid grid-cols-1 gap-3">
+                ${imageHtml}
+            </div>`;
+        document.getElementById("modal").style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
+      // 关闭弹窗
+      function closeModal() {
+        document.getElementById("modal").style.display = "none";
+        document.body.style.overflow = "auto";
+      }
+    </script>
+  </body>
+</html>
