@@ -2,21 +2,23 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>广州鼎昌贸易商行</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>广州鼎昌贸易商行 | 皮料·蕾丝·绒布</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: "#E0F7FA", // 清水蓝（底色 舒服）
-              secondary: "#4DD0E1", // 捣蓝色（主色 清爽）
+              primary: "#E0F7FA",
+              secondary: "#4DD0E1",
               light: "#F5FCFF",
               text: "#263238",
             },
@@ -24,57 +26,59 @@
         },
       };
     </script>
-
-    <style type="text/tailwindcss">
-      @layer utilities {
-        .product-card {
-          @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer;
-        }
-        .category-btn {
-          @apply px-5 py-3 rounded-full bg-white hover:bg-secondary/20 transition-colors;
-        }
-        .category-btn.active {
-          @apply bg-secondary text-white font-medium;
-        }
-        /* 视频卡片样式 */
-        .video-card {
-          @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer;
-        }
+    <style>
+      .cart-sidebar {
+        transition: transform 0.3s ease-in-out;
+        transform: translateX(100%);
+      }
+      .cart-sidebar.open {
+        transform: translateX(0);
+      }
+      body.sidebar-open {
+        overflow: hidden;
+      }
+      .quantity-input {
+        width: 60px;
+        text-align: center;
+      }
+      .product-images-modal {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+      .product-images-modal img {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 8px;
       }
     </style>
   </head>
-
   <body class="bg-primary text-text min-h-screen">
-    <!-- 顶部介绍 -->
-    <header class="py-12 px-4 bg-secondary/20">
+    <header class="py-8 px-4 bg-secondary/20">
       <div class="max-w-6xl mx-auto text-center">
-        <h1 class="text-2xl md:text-4xl font-bold mb-4">广州鼎昌贸易商行</h1>
-        <span>📜 匠心皮料 · Crafted Leather</span>
-        <span>🎩 质感匠艺 · Texture Master</span>
-        <span>🌿 经久耐用 · Durable & Timeless</span>
+        <h1 class="text-2xl md:text-4xl font-bold mb-3">广州鼎昌贸易商行</h1>
+        <div class="flex flex-wrap justify-center gap-4 text-sm md:text-base">
+          <span>📜 匠心皮料 · Crafted Leather</span>
+          <span>🎩 质感匠艺 · Texture Master</span>
+          <span>🌿 经久耐用 · Durable & Timeless</span>
+        </div>
       </div>
     </header>
 
-    <!-- 产品 + 分类 -->
-    <main class="py-14 px-4">
+    <main class="py-10 px-4">
       <div class="max-w-6xl mx-auto">
-        <h2 class="text-xl md:text-2xl font-semibold text-center mb-4">
+        <h2 class="text-xl md:text-2xl font-semibold text-center mb-2">
           精品推荐
         </h2>
-
-        <!-- 分类 -->
         <div class="flex justify-center flex-wrap gap-3 my-6">
-          <button class="category-btn active" onclick="filter('all')">
-            全部
-          </button>
-          <button class="category-btn" onclick="filter('type1')">
-            加工工艺
-          </button>
-          <button class="category-btn" onclick="filter('type3')">绒布</button>
-          <button class="category-btn" onclick="filter('type4')">视频</button>
+          <button class="category-btn active" data-type="all">全部</button>
+          <button class="category-btn" data-type="type1">加工工艺</button>
+          <button class="category-btn" data-type="type2">蕾丝</button>
+          <button class="category-btn" data-type="type3">绒布</button>
+          <button class="category-btn" data-type="type4">视频</button>
         </div>
-
-        <!-- 产品/视频布局容器 -->
         <div
           id="productList"
           class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
@@ -82,8 +86,7 @@
       </div>
     </main>
 
-    <!-- 底部：地址 电话 微信 -->
-    <footer class="bg-secondary/20 py-10 px-4">
+    <footer class="bg-secondary/20 py-10 px-4 mt-8">
       <div class="max-w-6xl mx-auto">
         <div
           class="md:flex justify-between items-center gap-8 text-center md:text-left"
@@ -91,19 +94,18 @@
           <div>
             <h3 class="text-lg font-bold mb-3">联系我们</h3>
             <p class="mb-2">
-              <i class="fa-solid fa-location-dot mr-2"></i>
-              地址:中国 · 广州市南沙区环盛街2号2107室
+              <i class="fa-solid fa-location-dot mr-2"></i> 地址：中国 ·
+              广州市南沙区环盛街2号2107室
             </p>
             <p class="mb-2">
-              <i class="fa-solid fa-phone mr-2"></i> 电话:133 6055 9947
+              <i class="fa-solid fa-phone mr-2"></i> 电话：133 6055 9947
             </p>
             <p>
               <i class="fa-solid fa-envelope mr-2"></i>
-              邮箱:yuansiping@zumar.com.cn
+              邮箱：yuansiping@zumar.com.cn
             </p>
           </div>
-          <div>
-            <h3 class="text-lg font-bold mb-3"></h3>
+          <div class="mt-6 md:mt-0">
             <div class="bg-white p-2 rounded-lg inline-block">
               <img
                 src="https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20260407200128_188_12.png"
@@ -120,7 +122,65 @@
       </div>
     </footer>
 
-    <!-- 产品/视频弹窗 -->
+    <button
+      id="cartToggleBtn"
+      class="fixed bottom-6 right-6 bg-secondary text-white p-4 rounded-full shadow-lg z-40 md:hidden"
+    >
+      <i class="fa-solid fa-cart-shopping text-xl"></i>
+      <span
+        id="cartCountBadge"
+        class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+        >0</span
+      >
+    </button>
+
+    <div
+      id="cartSidebar"
+      class="cart-sidebar fixed top-0 right-0 w-full md:w-96 h-full bg-white shadow-2xl z-50 flex flex-col"
+    >
+      <div
+        class="p-4 border-b flex justify-between items-center bg-secondary/10"
+      >
+        <h2 class="text-xl font-bold">
+          <i class="fa-solid fa-cart-shopping mr-2"></i>购物车
+        </h2>
+        <button id="closeCartBtn" class="text-2xl">&times;</button>
+      </div>
+      <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+      <div class="border-t p-4 bg-gray-50">
+        <div class="flex justify-between text-lg font-bold mb-3">
+          <span>总计：</span>
+          <span id="cartTotal">¥0.00</span>
+        </div>
+        <div class="space-y-2">
+          <input
+            type="text"
+            id="customerName"
+            placeholder="收货人姓名"
+            class="w-full border rounded p-2 text-sm"
+          />
+          <input
+            type="tel"
+            id="customerPhone"
+            placeholder="联系电话"
+            class="w-full border rounded p-2 text-sm"
+          />
+          <textarea
+            id="address"
+            placeholder="详细地址"
+            rows="2"
+            class="w-full border rounded p-2 text-sm"
+          ></textarea>
+          <button
+            id="submitOrderBtn"
+            class="w-full bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary/80 transition"
+          >
+            提交订单
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div
       id="modal"
       class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4"
@@ -130,7 +190,7 @@
       >
         <button
           onclick="closeModal()"
-          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white"
+          class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow"
         >
           ✕
         </button>
@@ -139,316 +199,379 @@
     </div>
 
     <script>
-      // 产品数据（不含视频）
-      const products = [
-        {
-          id: 1,
-          title: "绒布压花工艺",
-          type: "type1",
-          intro: "压花工艺",
-          detail: "适合做鞋子,箱包,衣服,抱枕,沙发",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/c7c7503b59b03b4ae6ab30edbfb7967e.jpg",
-          img2: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/d80d6c1f70a1e64c4bb1022cb664f1fe.jpg",
-        },
-        {
-          id: 2,
-          title: "160g麂皮绒",
-          type: "type3",
-          intro: "+贴合亚古力13/y",
-          detail:
-            "浅色+贴合亚古力12.5/y,深色+贴合亚古力13/y,黑色+贴合亚古力+固色13/y",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/150g%E9%BA%82%E7%9A%AE%E7%BB%92.jpg",
-        },
-        {
-          id: 3,
-          title: "仿毛绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E4%BB%BF%E6%AF%9B%E7%BB%92.jpg",
-        },
-        {
-          id: 4,
-          title: "金丝绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E9%87%91%E4%B8%9D%E7%BB%92.jpg",
-        },
-        {
-          id: 5,
-          title: "200g空气层",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/200g%E7%A9%BA%E6%B0%94%E5%B1%82.jpg",
-        },
-        {
-          id: 6,
-          title: "330g牛皮绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/330g%E7%89%9B%E7%9A%AE%E7%BB%92.jpg",
-        },
-        {
-          id: 7,
-          title: "氨纶超弹",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E6%B0%A8%E7%BA%B6%E8%B6%85%E5%BC%B9.jpg",
-        },
-        {
-          id: 8,
-          title: "百丽绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%99%BE%E4%B8%BD%E7%BB%92.jpg",
-        },
-        {
-          id: 9,
-          title: "五枚缎",
-          type: "type3",
-          intro: "9.9/y",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E4%BA%94%E6%9E%9A%E7%BC%8E.jpg",
-        },
-        {
-          id: 10,
-          title: "羊津绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E6%B4%A5%E7%BB%92.jpg",
-        },
-        {
-          id: 11,
-          title: "羊筋绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E7%AD%8B%E7%BB%92.jpg",
-        },
-        {
-          id: 12,
-          title: "羊皮绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%BE%8A%E7%9A%AE%E7%BB%92.jpg",
-        },
-        {
-          id: 13,
-          title: "珍珠绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%8F%8D%E7%8F%A0%E7%BB%92.jpg",
-        },
-        {
-          id: 14,
-          title: "真超羊皮绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/%E7%9C%9F%E8%B6%85%E7%BE%8A%E7%9A%AE%E7%BB%92.jpg",
-        },
-        {
-          id: 15,
-          title: "1mm水晶绒",
-          type: "type3",
-          intro: "",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/1mm%E6%B0%B4%E6%99%B6%E7%BB%92.jpg",
-        },
-        {
-          id: 16,
-          title: "佳积布",
-          type: "type3",
-          intro: "110g",
-          detail: "更多颜色可选,欢迎咨询",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/3a888370d04ee5990342e24ffff6f1cb.jpg",
-          img2: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/0e9a0be307597e0f433e52ab2d495486.jpg",
-        },
-        {
-          id: 17,
-          title: "100g磨砂绒",
-          type: "type3",
-          intro: "产品简短介绍一句话。",
-          detail: "",
-          img1: "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/100g%E7%A3%A8%E7%A0%82%E7%BB%92.jpg",
-        },
-      ];
+      let allProducts = [];
+      let allVideos = [];
+      let currentType = "all";
+      let cart = [];
 
-      // 视频数据（单独定义，type为type4）
-      const videos = [
-        {
-          id: 101, // 视频ID从100开始，避免和产品ID冲突
-          title: "压花工艺展示",
-          type: "type4",
-          intro: "",
-          detail: "",
-          videoUrl:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/01aa78462599910fc15bcc8fe3365886_raw.mp4", // 替换为你的视频地址
-          coverImg:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/8a6aaa187ed13646b5471c06c6d21d30.jpg", // 视频封面图
-        },
-        {
-          id: 102, // 视频ID从100开始，避免和产品ID冲突
-          title: "蛇纹压花工艺展示",
-          type: "type4",
-          intro: "",
-          detail: "",
-          videoUrl:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/ef3024e64d67f7101f0fceb0ddf2a788_raw.mp4", // 替换为你的视频地址
-          coverImg:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/4fb6fe5c08d7a704abfeef732a162b2e.jpg", // 视频封面图
-        },
-        {
-          id: 103, // 视频ID从100开始，避免和产品ID冲突
-          title: "恐龙纹压花工艺展示",
-          type: "type4",
-          intro: "",
-          detail: "",
-          videoUrl:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/d98b8805bdcf2e3e1d738522488eb031_raw.mp4", // 替换为你的视频地址
-          coverImg:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/95e79a46504ab3079b8c5db81d5748c7.jpg", // 视频封面图
-        },
-        {
-          id: 104, // 视频ID从100开始，避免和产品ID冲突
-          title: "深葡萄紫压花工艺展示",
-          type: "type4",
-          intro: "",
-          detail: "",
-          videoUrl:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/1866f22700115612b7e0590b3d9adbc7_raw.mp4", // 替换为你的视频地址
-          coverImg:
-            "https://yuanhaochen.oss-cn-guangzhou.aliyuncs.com/%E9%9E%8B%E5%AD%90/d7f0a10cca8c57d9ded8f0b77ac3cbb9.jpg", // 视频封面图
-        },
-        // 可添加更多视频
-      ];
+      const productListDiv = document.getElementById("productList");
+      const cartSidebar = document.getElementById("cartSidebar");
+      const cartToggleBtn = document.getElementById("cartToggleBtn");
+      const closeCartBtn = document.getElementById("closeCartBtn");
+      const cartItemsDiv = document.getElementById("cartItems");
+      const cartTotalSpan = document.getElementById("cartTotal");
+      const cartCountBadge = document.getElementById("cartCountBadge");
+      const submitOrderBtn = document.getElementById("submitOrderBtn");
 
-      // 页面加载时渲染全部产品（不含视频）
-      document.addEventListener("DOMContentLoaded", () => render(products));
+      const formatPrice = (price) => `¥${parseFloat(price).toFixed(2)}`;
 
-      // 渲染页面（区分产品和视频）
-      function render(list, isVideo = false) {
-        const container = document.getElementById("productList");
+      function updateCartUI() {
+        if (cart.length === 0) {
+          cartItemsDiv.innerHTML = `<div class="text-center text-gray-400 py-8">购物车还是空的～</div>`;
+          cartTotalSpan.innerText = "¥0.00";
+          cartCountBadge.innerText = "0";
+          return;
+        }
+        let total = 0;
+        let totalCount = 0;
         let html = "";
+        cart.forEach((item, idx) => {
+          const subtotal = item.price * item.quantity;
+          total += subtotal;
+          totalCount += item.quantity;
+          html += `
+          <div class="flex gap-3 border-b pb-3">
+            <img src="${item.img}" class="w-16 h-16 object-cover rounded" />
+            <div class="flex-1">
+              <h4 class="font-bold">${escapeHtml(item.title)}</h4>
+              <p class="text-secondary text-sm">${formatPrice(item.price)}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <button class="cart-qty-dec text-gray-500 border px-2 rounded" data-idx="${idx}">-</button>
+                <span class="w-8 text-center">${item.quantity}</span>
+                <button class="cart-qty-inc text-gray-500 border px-2 rounded" data-idx="${idx}">+</button>
+                <button class="cart-remove text-red-500 text-sm ml-2" data-idx="${idx}">删除</button>
+              </div>
+            </div>
+            <div class="text-right">${formatPrice(subtotal)}</div>
+          </div>
+        `;
+        });
+        cartItemsDiv.innerHTML = html;
+        cartTotalSpan.innerText = formatPrice(total);
+        cartCountBadge.innerText = totalCount;
 
-        // 如果是视频分类，设置手机端一行一列布局
-        if (isVideo) {
-          container.className =
-            "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6";
-
-          // 渲染视频卡片
-          list.forEach((v) => {
-            html += `
-              <div class="video-card" onclick="openModal(${v.id})">
-                  <div class="relative h-44 w-full">
-                    <img src="${v.coverImg}" class="h-full w-full object-cover">
-                    <!-- 视频播放图标 -->
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                      <i class="fa-solid fa-play text-white text-4xl"></i>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                      <h3 class="font-bold text-lg mb-1">${v.title || "未命名视频"}</h3>
-                      <p class="text-sm text-gray-600 line-clamp-2">${v.intro}</p>
-                  </div>
-              </div>`;
+        document.querySelectorAll(".cart-qty-dec").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const idx = parseInt(btn.dataset.idx);
+            if (cart[idx].quantity > 1) cart[idx].quantity--;
+            else cart.splice(idx, 1);
+            updateCartUI();
+            saveCartToLocal();
+            refreshProductGrid();
           });
-        } else {
-          // 恢复产品默认布局
-          container.className =
-            "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
-
-          // 渲染产品卡片
-          list.forEach((p) => {
-            html += `
-              <div class="product-card" onclick="openModal(${p.id})">
-                  <img src="${p.img1}" class="h-44 w-full object-cover">
-                  <div class="p-4">
-                      <h3 class="font-bold text-lg mb-1">${p.title || "未命名产品"}</h3>
-                      <p class="text-sm text-gray-600 line-clamp-2">${p.intro}</p>
-                  </div>
-              </div>`;
+        });
+        document.querySelectorAll(".cart-qty-inc").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const idx = parseInt(btn.dataset.idx);
+            const product = allProducts.find((p) => p.id === cart[idx].id);
+            if (cart[idx].quantity < product.stock) {
+              cart[idx].quantity++;
+              updateCartUI();
+              saveCartToLocal();
+              refreshProductGrid();
+            } else alert("库存不足");
           });
-        }
-
-        container.innerHTML = html;
+        });
+        document.querySelectorAll(".cart-remove").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const idx = parseInt(btn.dataset.idx);
+            cart.splice(idx, 1);
+            updateCartUI();
+            saveCartToLocal();
+            refreshProductGrid();
+          });
+        });
       }
 
-      // 分类筛选
-      function filter(type) {
-        // 移除所有按钮的active状态
-        document
-          .querySelectorAll(".category-btn")
-          .forEach((b) => b.classList.remove("active"));
-        // 给当前点击的按钮添加active状态
-        event.target.classList.add("active");
-
-        if (type === "all") {
-          // 全部分类只显示产品，不显示视频
-          render(products);
-        } else if (type === "type4") {
-          // 视频分类只显示视频，并且标记为视频渲染模式
-          render(videos, true);
-        } else {
-          // 其他分类筛选对应产品
-          const filteredProducts = products.filter((p) => p.type === type);
-          render(filteredProducts);
-        }
+      function saveCartToLocal() {
+        localStorage.setItem("shopCart", JSON.stringify(cart));
       }
-
-      // 打开弹窗（支持产品和视频）
-      function openModal(id) {
-        // 先查找产品
-        let item = products.find((x) => x.id === id);
-        let isVideoItem = false;
-
-        // 如果不是产品，查找视频
-        if (!item) {
-          item = videos.find((x) => x.id === id);
-          isVideoItem = true;
-        }
-
-        if (!item) return;
-
-        let contentHtml = `<h2 class="text-xl font-bold mb-3">${item.title || "未命名内容"}</h2>`;
-        contentHtml += `<p class="mb-4 text-gray-600">${item.detail || "暂无详细介绍"}</p>`;
-
-        if (isVideoItem) {
-          // 视频弹窗内容
-          contentHtml += `
-            <div class="w-full">
-              <video controls class="rounded-lg w-full h-auto">
-                <source src="${item.videoUrl}" type="video/mp4">
-                您的浏览器不支持HTML5视频播放，请升级浏览器。
-              </video>
-            </div>`;
-        } else {
-          // 产品弹窗内容（图片）
-          let imageHtml = `<img src="${item.img1}" class="rounded-lg w-full h-auto object-cover" alt="${item.title}">`;
-          if (item.img2 && item.img2.trim() !== "") {
-            imageHtml += `<img src="${item.img2}" class="rounded-lg w-full h-auto object-cover mt-3" alt="${item.title}-详情">`;
+      function loadCartFromLocal() {
+        const saved = localStorage.getItem("shopCart");
+        if (saved) {
+          try {
+            cart = JSON.parse(saved);
+            cart = cart.filter((item) =>
+              allProducts.find((p) => p.id === item.id && p.stock > 0),
+            );
+            updateCartUI();
+          } catch (e) {
+            cart = [];
           }
-          contentHtml += `<div class="grid grid-cols-1 gap-3">${imageHtml}</div>`;
         }
+      }
 
-        document.getElementById("modalContent").innerHTML = contentHtml;
+      function addToCart(product, quantity = 1) {
+        if (quantity <= 0) return;
+        if (product.stock < quantity) {
+          alert(`「${product.title}」库存不足，仅剩 ${product.stock} 件`);
+          return;
+        }
+        const existing = cart.find((item) => item.id === product.id);
+        if (existing) {
+          const newQty = existing.quantity + quantity;
+          if (newQty > product.stock) {
+            alert(
+              `「${product.title}」库存不足，当前已有 ${existing.quantity} 件，最多再购 ${product.stock - existing.quantity} 件`,
+            );
+            return;
+          }
+          existing.quantity = newQty;
+        } else {
+          cart.push({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            stock: product.stock,
+            quantity: quantity,
+            img:
+              product.images && product.images.length ? product.images[0] : "",
+          });
+        }
+        updateCartUI();
+        saveCartToLocal();
+        cartSidebar.classList.add("open");
+        document.body.classList.add("sidebar-open");
+      }
+
+      async function refreshProductGrid() {
+        let html = "";
+        if (currentType === "type4") {
+          productListDiv.className =
+            "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6";
+          for (const v of allVideos) {
+            html += `
+            <div class="video-card bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden cursor-pointer" onclick="openVideoModal(${v.id})">
+              <div class="relative h-44 w-full">
+                <img src="${v.coverImg}" class="h-full w-full object-cover" alt="${escapeHtml(v.title)}">
+                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <i class="fa-solid fa-play text-white text-4xl"></i>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-lg mb-1">${escapeHtml(v.title || "视频")}</h3>
+                <p class="text-sm text-gray-600">${escapeHtml(v.intro || "")}</p>
+              </div>
+            </div>
+          `;
+          }
+        } else {
+          productListDiv.className =
+            "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
+          let filtered =
+            currentType === "all"
+              ? allProducts
+              : allProducts.filter((p) => p.type === currentType);
+          for (const p of filtered) {
+            const stockStatus =
+              p.stock > 0
+                ? `<span class="text-green-600 text-xs">库存 ${p.stock}</span>`
+                : `<span class="text-red-500 text-xs">缺货</span>`;
+            const coverImg =
+              p.images && p.images.length
+                ? p.images[0]
+                : "https://placehold.co/400x300?text=无图";
+            html += `
+            <div class="product-card bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+              <div onclick="openProductModal(${p.id})" class="cursor-pointer">
+                <img src="${coverImg}" class="h-40 w-full object-cover" onerror="this.src='https://placehold.co/400x300?text=无图'">
+              </div>
+              <div class="p-3 flex-1 flex flex-col">
+                <div onclick="openProductModal(${p.id})" class="cursor-pointer">
+                  <h3 class="font-bold text-base">${escapeHtml(p.title || "未命名产品")}</h3>
+                  <p class="text-xs text-gray-500 line-clamp-1">${escapeHtml(p.intro || "")}</p>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-secondary font-bold">${formatPrice(p.price)}</span>
+                    ${stockStatus}
+                  </div>
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                  <input type="number" min="1" max="${p.stock}" value="1" class="quantity-input border rounded px-1 py-1 text-sm w-16" data-id="${p.id}" id="qty_${p.id}">
+                  <button class="buy-btn bg-secondary/80 hover:bg-secondary text-white text-sm px-3 py-1 rounded-full transition" data-id="${p.id}" data-stock="${p.stock}">购买</button>
+                </div>
+              </div>
+            </div>
+          `;
+          }
+        }
+        productListDiv.innerHTML = html;
+        document.querySelectorAll(".buy-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const productId = parseInt(btn.dataset.id);
+            const product = allProducts.find((p) => p.id === productId);
+            if (!product) return;
+            const qtyInput = document.getElementById(`qty_${productId}`);
+            let qty = parseInt(qtyInput.value);
+            if (isNaN(qty) || qty < 1) qty = 1;
+            addToCart(product, qty);
+          });
+        });
+      }
+
+      function openProductModal(id) {
+        const product = allProducts.find((p) => p.id === id);
+        if (!product) return;
+        let imagesHtml = "";
+        if (product.images && product.images.length) {
+          imagesHtml =
+            '<div class="product-images-modal grid grid-cols-1 gap-3">';
+          product.images.forEach((img) => {
+            imagesHtml += `<img src="${img}" class="rounded-lg w-full object-cover">`;
+          });
+          imagesHtml += "</div>";
+        } else {
+          imagesHtml = '<p class="text-gray-400">暂无图片</p>';
+        }
+        const content = `
+        <h2 class="text-xl font-bold mb-2">${escapeHtml(product.title)}</h2>
+        <p class="text-gray-600 mb-1">${escapeHtml(product.detail || "暂无详细介绍")}</p>
+        <p class="text-secondary font-bold mb-3">${formatPrice(product.price)}  / 库存：${product.stock}</p>
+        ${imagesHtml}
+      `;
+        document.getElementById("modalContent").innerHTML = content;
         document.getElementById("modal").style.display = "flex";
         document.body.style.overflow = "hidden";
       }
 
-      // 关闭弹窗
+      function openVideoModal(id) {
+        const video = allVideos.find((v) => v.id === id);
+        if (!video) return;
+        const content = `
+        <h2 class="text-xl font-bold mb-3">${escapeHtml(video.title)}</h2>
+        <p class="mb-4 text-gray-600">${escapeHtml(video.detail || "")}</p>
+        <video controls class="rounded-lg w-full" poster="${video.coverImg}">
+          <source src="${video.videoUrl}" type="video/mp4">
+          浏览器不支持视频播放。
+        </video>
+      `;
+        document.getElementById("modalContent").innerHTML = content;
+        document.getElementById("modal").style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+
       function closeModal() {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
       }
+
+      function initFilters() {
+        const btns = document.querySelectorAll(".category-btn");
+        btns.forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            btns.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            currentType = btn.dataset.type;
+            await refreshProductGrid();
+          });
+        });
+      }
+
+      async function loadData() {
+        try {
+          const [prodRes, vidRes] = await Promise.all([
+            fetch("/api/products"),
+            fetch("/api/videos"),
+          ]);
+          if (!prodRes.ok) throw new Error("产品加载失败");
+          allProducts = await prodRes.json();
+          allVideos = await vidRes.json();
+          allProducts.forEach((p) => {
+            p.stock = p.stock || 0;
+            p.price = p.price || 0;
+          });
+          await refreshProductGrid();
+          loadCartFromLocal();
+        } catch (err) {
+          console.error(err);
+          productListDiv.innerHTML = `<div class="col-span-full text-center text-red-500">数据加载失败，请确保后端服务已启动</div>`;
+        }
+      }
+
+      async function submitOrder() {
+        const name = document.getElementById("customerName").value.trim();
+        const phone = document.getElementById("customerPhone").value.trim();
+        const address = document.getElementById("address").value.trim();
+        if (!name || !phone || !address) {
+          alert("请完整填写姓名、电话和地址");
+          return;
+        }
+        if (cart.length === 0) {
+          alert("购物车是空的");
+          return;
+        }
+        const items = cart.map((item) => ({
+          productId: item.id,
+          title: item.title,
+          quantity: item.quantity,
+          price: item.price,
+        }));
+        try {
+          const res = await fetch("/api/order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items,
+              customerName: name,
+              customerPhone: phone,
+              address,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            alert(`订单提交成功！订单号：${data.orderId}`);
+            cart = [];
+            updateCartUI();
+            saveCartToLocal();
+            await loadData();
+            document.getElementById("customerName").value = "";
+            document.getElementById("customerPhone").value = "";
+            document.getElementById("address").value = "";
+            cartSidebar.classList.remove("open");
+            document.body.classList.remove("sidebar-open");
+          } else {
+            alert("下单失败：" + (data.error || "未知错误"));
+            await loadData();
+          }
+        } catch (err) {
+          alert("网络错误，请稍后重试");
+          console.error(err);
+        }
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function (m) {
+          if (m === "&") return "&amp;";
+          if (m === "<") return "&lt;";
+          if (m === ">") return "&gt;";
+          return m;
+        });
+      }
+
+      function initSidebar() {
+        cartToggleBtn?.addEventListener("click", () => {
+          cartSidebar.classList.add("open");
+          document.body.classList.add("sidebar-open");
+        });
+        closeCartBtn.addEventListener("click", () => {
+          cartSidebar.classList.remove("open");
+          document.body.classList.remove("sidebar-open");
+        });
+        cartSidebar.addEventListener("click", (e) => {
+          if (e.target === cartSidebar) {
+            cartSidebar.classList.remove("open");
+            document.body.classList.remove("sidebar-open");
+          }
+        });
+        submitOrderBtn.addEventListener("click", submitOrder);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        initFilters();
+        initSidebar();
+        loadData();
+      });
     </script>
   </body>
 </html>
