@@ -470,7 +470,7 @@
       async function loadData() {
         try {
           const [prodRes, vidRes] = await Promise.all([
-            fetch("https://admin.zumar.com.cn/api/products"),
+            fetch("https://admin.zumar.com.cn/api/goods/list"),
             fetch("https://admin.zumar.com.cn/api/videos"),
           ]);
           if (!prodRes.ok) throw new Error("产品加载失败");
