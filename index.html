@@ -470,8 +470,8 @@
       async function loadData() {
         try {
           const [prodRes, vidRes] = await Promise.all([
-            fetch("/api/products"),
-            fetch("/api/videos"),
+            fetch("https://admin.zumar.com.cn/api/products"),
+            fetch("https://admin.zumar.com.cn/api/videos"),
           ]);
           if (!prodRes.ok) throw new Error("产品加载失败");
           allProducts = await prodRes.json();
@@ -507,7 +507,7 @@
           price: item.price,
         }));
         try {
-          const res = await fetch("/api/order", {
+          const res = await fetch("https://admin.zumar.com.cn/api/order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
