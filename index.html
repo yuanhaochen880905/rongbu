@@ -439,9 +439,10 @@
       // 修改后的loadData函数，完全移除视频请求
       async function loadData() {
         try {
-          // 只保留商品请求，彻底删掉视频fetch
           let goodsRes = await fetch(`${BASE_URL}/goods/list`)
-          allProducts = await goodsRes.json()
+          let resJson = await goodsRes.json()
+          // 关键：取后端data里的数组
+          allProducts = Array.isArray(resJson.data) ? resJson.data : []
           refreshProductGrid()
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
