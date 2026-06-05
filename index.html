@@ -13,6 +13,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <script>
+      const BASE_URL = "http://你的服务器IP:4000/api";
       tailwind.config = {
         theme: {
           extend: {
@@ -26,6 +27,7 @@
         },
       };
     </script>
+
     <style>
       .cart-sidebar {
         transition: transform 0.3s ease-in-out;
@@ -470,8 +472,8 @@
       async function loadData() {
         try {
           const [prodRes, vidRes] = await Promise.all([
-            fetch("https://admin.zumar.com.cn/api/goods/list"),
-            fetch("https://admin.zumar.com.cn/api/videos"),
+            fetch(`${BASE_URL}/goods/list`),
+            fetch(`${BASE_URL}/videos`),
           ]);
           if (!prodRes.ok) throw new Error("产品加载失败");
           allProducts = await prodRes.json();
@@ -507,7 +509,7 @@
           price: item.price,
         }));
         try {
-          const res = await fetch("https://admin.zumar.com.cn/api/order", {
+          const res = await fetch(`${BASE_URL}/order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
