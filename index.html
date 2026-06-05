@@ -176,6 +176,7 @@
           ></textarea>
           <button
             id="submitOrderBtn"
+            style="display:none"
             class="w-full bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary/80 transition"
           >
             提交订单
@@ -439,11 +440,11 @@
       // 修改后的loadData函数，完全移除视频请求
       async function loadData() {
         try {
-          let goodsRes = await fetch(`${BASE_URL}/goods/list`)
-          let resJson = await goodsRes.json()
+          let goodsRes = await fetch(`${BASE_URL}/goods/list`);
+          let resJson = await goodsRes.json();
           // 关键：取后端data里的数组
-          allProducts = Array.isArray(resJson.data) ? resJson.data : []
-          refreshProductGrid()
+          allProducts = Array.isArray(resJson.data) ? resJson.data : [];
+          refreshProductGrid();
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
             p.price = p.price || 0;
