@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>订单管理 - 广州鼎昌后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="bg-gray-100 p-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">📦 订单管理</h1>
+        <a
+          href="admin.html"
+          class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+        >
+          ← 返回产品管理
+        </a>
+      </div>
+
+      <!-- 筛选和刷新 -->
+      <div
+        class="bg-white p-4 rounded shadow mb-6 flex justify-between items-center"
+      >
+        <div>
+          <button
+            id="refreshBtn"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            <i class="fas fa-sync-alt mr-1"></i> 刷新订单
+          </button>
+        </div>
+        <div>
+          <span id="orderCount" class="text-gray-600"></span>
+        </div>
+      </div>
+
+      <!-- 订单列表 -->
+      <div id="orderList" class="space-y-4"></div>
+    </div>
+
+    <script>
+      // 配置基础 API 地址
+      const BASE_URL = "http://admin.zumar.com.cn:4000/api";
+
+      // 加载所有订单
+      async function loadOrders() {
+        try {
+          const res = await fetch(`${BASE_URL}/order/list`); // 修改为新的请求路径
+          if (!res.ok) throw new Error("加载失败");
+          const orders = await res.json();
+          document.getElementById("orderCount").innerText =
+            `共 ${orders.length} 条订单`;
+          renderOrders(orders);
+        } catch (err) {
+          console.error(err);
+          Swal.fire("错误", "无法加载订单列表", "error");
+        }
+      }
+
+      // 渲染订单卡片
+      function renderOrders(orders) {
+        const container = document.getElementById("orderList");
+        if (!orders.length) {
+          container.innerHTML =
+            '<div class="bg-white rounded shadow p-8 text-center text-gray-500">暂无订单</div>';
+          return;
+        }
+
+        let html = "";
+        for (let order of orders) {
+          // 解析商品详情
+          let itemsHtml = "";
+          if (order.items && order.items.length) {
+            itemsHtml = '<ul class="list-disc pl-5 mt-1">';
+            order.items.forEach((item) => {
+              itemsHtml += `<li>${escapeHtml(item.title)} × ${item.quantity} 件 (单价 ¥${item.price})</li>`;
+            });
+            itemsHtml += "</ul>";
+          } else {
+            itemsHtml = '<p class="text-gray-400">无商品明细</p>';
+          }
+
+          const payStatus =
+            order.pay_status === 1
+              ? '<span class="text-green-600 font-bold">✓ 已付款</span>'
+              : '<span class="text-red-600 font-bold">⏳ 待付款</span>';
+
+          const totalAmount = parseFloat(order.total_amount).toFixed(2);
+
+          html += `
+          <div class="bg-white rounded-lg shadow p-5 border-l-4 ${order.pay_status === 1 ? "border-green-500" : "border-yellow-500"}">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">订单号</p>
+                <p class="font-mono font-bold">${order.id}</p>
+                <p class="text-sm text-gray-500 mt-2">下单时间</p>
+                <p class="text-sm">${new Date(order.created_at).toLocaleString()}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">客户信息</p>
+                <p>${escapeHtml(order.customer_name)}</p>
+                <p>${escapeHtml(order.customer_phone)}</p>
+                <p class="text-sm break-all">${escapeHtml(order.address)}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">商品明细</p>
+                ${itemsHtml}
+              </div>
+              <div class="text-right">
+                <p class="text-sm text-gray-500">总金额</p>
+                <p class="text-xl font-bold text-secondary">¥${totalAmount}</p>
+                <p class="mt-2">${payStatus}</p>
+                ${order.pay_status !== 1 ? `<button onclick="markAsPaid(${order.id})" class="mt-3 bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">标记已付款</button>` : ""}
+                ${order.transaction_id ? `<p class="text-xs text-gray-400 mt-2">交易号: ${order.transaction_id}</p>` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+        }
+        container.innerHTML = html;
+      }
+
+      // 标记订单为已付款
+      async function markAsPaid(orderId) {
+        const confirm = await Swal.fire({
+          title: "确认标记为已付款？",
+          text: "订单状态将变为“已付款”，且不可撤销",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "确认",
+          cancelButtonText: "取消",
+        });
+        if (!confirm.isConfirmed) return;
+
+        try {
+          const res = await fetch(`${BASE_URL}/orders/${orderId}/pay`, {
+            // 保持和后端对应的付款接口路径
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ transaction_id: `MANUAL_${Date.now()}` }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            Swal.fire("成功", "订单已标记为已付款", "success");
+            loadOrders(); // 刷新列表
+          } else {
+            Swal.fire("失败", data.error || "操作失败", "error");
+          }
+        } catch (err) {
+          Swal.fire("错误", "网络请求失败", "error");
+        }
+      }
+
+      // 辅助函数
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function (m) {
+          if (m === "&") return "&amp;";
+          if (m === "<") return "&lt;";
+          if (m === ">") return "&gt;";
+          return m;
+        });
+      }
+
+      // 页面加载时获取订单
+      document.addEventListener("DOMContentLoaded", () => {
+        loadOrders();
+        document
+          .getElementById("refreshBtn")
+          .addEventListener("click", loadOrders);
+        // 每30秒自动刷新一次
+        setInterval(loadOrders, 30000);
+      });
+
+      // 声明全局函数供按钮调用
+      window.markAsPaid = markAsPaid;
+    </script>
+  </body>
+</html>
