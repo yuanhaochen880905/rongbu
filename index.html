@@ -470,21 +470,18 @@
       }
 
       async function loadData() {
-        try {
-          // 单独请求商品，必正常展示
-          let goodsRes = await fetch(`${BASE_URL}/goods/list`)
-          allProducts = await goodsRes.json()
-          refreshProductGrid()
+        // 视频提前单独请求，不在try里面，404不会进catch
+        fetch(`${BASE_URL}/videos`)
+          .then((res) => res.json())
+          .then((data) => {
+            allVideos = data;
+          })
+          .catch(() => {});
 
-          // 视频单独请求，报错自动忽略，不影响商品
-          fetch(`${BASE_URL}/videos`)
-          .then(res=>res.json())
-          .then(data=>{
-              allVideos = data
-          })
-          .catch(()=>{
-              // 视频接口不存在直接跳过，不弹窗报错
-          })
+        try {
+          let goodsRes = await fetch(`${BASE_URL}/goods/list`);
+          allProducts = await goodsRes.json();
+          refreshProductGrid();
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
             p.price = p.price || 0;
