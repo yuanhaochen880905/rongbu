@@ -471,18 +471,24 @@
 
       async function loadData() {
         try {
-          const [prodRes, vidRes] = await Promise.all([
-            fetch(`${BASE_URL}/goods/list`),
-            fetch(`${BASE_URL}/videos`),
-          ]);
-          if (!prodRes.ok) throw new Error("产品加载失败");
-          allProducts = await prodRes.json();
-          allVideos = await vidRes.json();
+          // 单独请求商品，必正常展示
+          let goodsRes = await fetch(`${BASE_URL}/goods/list`)
+          allProducts = await goodsRes.json()
+          refreshProductGrid()
+
+          // 视频单独请求，报错自动忽略，不影响商品
+          fetch(`${BASE_URL}/videos`)
+          .then(res=>res.json())
+          .then(data=>{
+              allVideos = data
+          })
+          .catch(()=>{
+              // 视频接口不存在直接跳过，不弹窗报错
+          })
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
             p.price = p.price || 0;
           });
-          await refreshProductGrid();
           loadCartFromLocal();
         } catch (err) {
           console.error(err);
