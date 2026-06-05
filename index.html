@@ -55,13 +55,6 @@
         object-fit: contain;
         border-radius: 8px;
       }
-      /* 分类按钮样式优化 */
-      .category-btn {
-        @apply px-4 py-2 rounded-full bg-white shadow-sm hover:bg-secondary/20 transition;
-      }
-      .category-btn.active {
-        @apply bg-secondary text-white;
-      }
     </style>
   </head>
   <body class="bg-primary text-text min-h-screen">
@@ -86,8 +79,8 @@
           <button class="category-btn" data-type="type1">加工工艺</button>
           <button class="category-btn" data-type="type2">蕾丝</button>
           <button class="category-btn" data-type="type3">绒布</button>
-          <!-- 取消视频分类按钮隐藏 -->
-          <button class="category-btn" data-type="type4">视频</button>
+          <!-- 隐藏视频分类按钮 -->
+          <button class="category-btn hidden" data-type="type4">视频</button>
         </div>
         <div
           id="productList"
@@ -181,12 +174,11 @@
             rows="2"
             class="w-full border rounded p-2 text-sm"
           ></textarea>
-          <!-- 恢复提交订单按钮显示 -->
           <button
             id="submitOrderBtn"
             class="w-full bg-secondary text-white py-2 rounded-lg font-semibold hover:bg-secondary/80 transition"
           >
-            提交订单并支付
+            提交订单
           </button>
         </div>
       </div>
@@ -209,13 +201,11 @@
       </div>
     </div>
 
-    <!-- 引入微信JSAPI支付相关JS -->
-    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script>
       let allProducts = [];
+      // 移除视频相关变量
       let currentType = "all";
       let cart = [];
-      let openid = ""; // 存储openid
 
       const productListDiv = document.getElementById("productList");
       const cartSidebar = document.getElementById("cartSidebar");
@@ -349,6 +339,7 @@
 
       async function refreshProductGrid() {
         let html = "";
+        // 移除视频相关逻辑
         productListDiv.className =
           "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
         let filtered =
@@ -426,6 +417,8 @@
         document.body.style.overflow = "hidden";
       }
 
+      // 移除openVideoModal函数
+
       function closeModal() {
         document.getElementById("modal").style.display = "none";
         document.body.style.overflow = "auto";
@@ -443,84 +436,12 @@
         });
       }
 
-      // 获取URL参数
-      function getUrlParam(name) {
-        const reg = new RegExp(`(^|&)${name}=([^&]*)(&|$)`);
-        const r = window.location.search.substr(1).match(reg);
-        if (r != null) return unescape(r[2]);
-        return null;
-      }
-
-      // 保存openid到本地存储
-      function saveOpenidToLocal(openid) {
-        localStorage.setItem("wx_openid", openid);
-      }
-
-      // 从本地存储获取openid
-      function getOpenidFromLocal() {
-        return localStorage.getItem("wx_openid") || "";
-      }
-
-      // 跳转到微信授权页面
-      function redirectToWxAuth() {
-        // 后端授权接口地址，需要后端配合实现
-        const authUrl = `${BASE_URL}/wxpay/auth`;
-        // 当前页面URL，授权成功后回调
-        const redirectUri = encodeURIComponent(window.location.href);
-        // 跳转到授权页面
-        window.location.href = `${authUrl}?redirect_uri=${redirectUri}`;
-      }
-
-      // 获取openid
-      async function getOpenid() {
-        // 先从本地存储获取
-        openid = getOpenidFromLocal();
-        if (openid) {
-          console.log("从本地存储获取openid：", openid);
-          return;
-        }
-
-        // 从URL参数获取（授权回调后）
-        const code = getUrlParam("code");
-        if (code) {
-          try {
-            // 通过code获取openid
-            const res = await fetch(`${BASE_URL}/wxpay/getOpenid`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ code: code }),
-            });
-            const data = await res.json();
-            if (res.ok && data.openid) {
-              openid = data.openid;
-              saveOpenidToLocal(openid);
-              console.log("通过code获取openid成功：", openid);
-
-              // 移除URL中的code参数，避免重复授权
-              const url = window.location.href.split("?")[0];
-              window.history.replaceState({}, document.title, url);
-            } else {
-              throw new Error(data.error || "获取openid失败");
-            }
-          } catch (err) {
-            console.error("获取openid失败：", err);
-            // 授权失败，重新跳转授权
-            redirectToWxAuth();
-          }
-        } else {
-          // 没有code，跳转到授权页面
-          console.log("没有code，跳转到微信授权页面");
-          redirectToWxAuth();
-        }
-      }
-
+      // 修改后的loadData函数，完全移除视频请求
       async function loadData() {
         try {
-          // 先获取openid
-          await getOpenid();
-
           let goodsRes = await fetch(`${BASE_URL}/goods/list`);
           let resJson = await goodsRes.json();
+          // 关键：取后端data里的数组
           allProducts = Array.isArray(resJson.data) ? resJson.data : [];
           refreshProductGrid();
           allProducts.forEach((p) => {
@@ -532,119 +453,6 @@
           console.error(err);
           productListDiv.innerHTML = `<div class="col-span-full text-center text-red-500">数据加载失败，请确保后端服务已启动</div>`;
         }
-      }
-
-      // 获取微信支付配置
-      async function getWxPayConfig(orderId, totalAmount) {
-        try {
-          const res = await fetch(`${BASE_URL}/wxpay/config`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: orderId,
-              totalAmount: totalAmount,
-              openid: openid, // 传入openid
-              url: window.location.href.split("#")[0], // 当前页面URL，用于签名
-            }),
-          });
-          const data = await res.json();
-          if (res.ok) {
-            return data;
-          } else {
-            throw new Error(data.error || "获取支付配置失败");
-          }
-        } catch (err) {
-          console.error("获取微信支付配置失败：", err);
-          alert("获取支付配置失败：" + err.message);
-          return null;
-        }
-      }
-
-      // 处理微信支付（仅保留JSAPI一键唤起）
-      async function handleWxPay(orderId, totalAmount) {
-        // 检查openid是否存在
-        if (!openid) {
-          alert("获取微信用户信息失败，请刷新页面重试");
-          await getOpenid();
-          return;
-        }
-
-        // 1. 获取微信支付配置
-        const wxConfig = await getWxPayConfig(orderId, totalAmount);
-        if (!wxConfig) return;
-
-        // 2. 配置微信JSAPI
-        wx.config({
-          debug: false, // 调试模式开启会输出日志
-          appId: wxConfig.appId, // 公众号appId
-          timestamp: wxConfig.timestamp, // 时间戳
-          nonceStr: wxConfig.nonceStr, // 随机字符串
-          signature: wxConfig.signature, // 签名
-          jsApiList: ["chooseWXPay"], // 需要使用的JSAPI列表
-        });
-
-        // 3. 微信配置验证成功
-        wx.ready(async () => {
-          try {
-            // 4. 获取支付参数
-            const payRes = await fetch(`${BASE_URL}/wxpay/order`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: orderId,
-                totalAmount: totalAmount,
-                openid: openid, // 传入openid
-              }),
-            });
-            const payData = await payRes.json();
-
-            if (payRes.ok) {
-              // 微信内一键唤起支付收银台
-              if (wx.chooseWXPay) {
-                wx.chooseWXPay({
-                  timestamp: payData.timeStamp,
-                  nonceStr: payData.nonceStr,
-                  package: payData.package,
-                  signType: payData.signType,
-                  paySign: payData.paySign,
-                  success: function (res) {
-                    // 支付成功回调
-                    alert("支付成功！订单已完成");
-                    // 清空购物车
-                    cart = [];
-                    updateCartUI();
-                    saveCartToLocal();
-                    loadData();
-                    // 关闭购物车侧边栏
-                    cartSidebar.classList.remove("open");
-                    document.body.classList.remove("sidebar-open");
-                  },
-                  cancel: function () {
-                    // 支付取消
-                    alert("您取消了支付");
-                  },
-                  fail: function (res) {
-                    // 支付失败
-                    alert("支付失败：" + (res.errMsg || "未知错误"));
-                  },
-                });
-              } else {
-                alert("当前环境不支持微信支付，请在微信内打开");
-              }
-            } else {
-              throw new Error(payData.error || "创建支付订单失败");
-            }
-          } catch (err) {
-            console.error("创建支付订单失败：", err);
-            alert("创建支付订单失败：" + err.message);
-          }
-        });
-
-        // 微信配置验证失败
-        wx.error(function (res) {
-          console.error("微信配置失败：", res);
-          alert("微信支付配置失败，请刷新页面重试");
-        });
       }
 
       async function submitOrder() {
@@ -659,29 +467,13 @@
           alert("购物车是空的");
           return;
         }
-
-        // 检查openid是否存在
-        if (!openid) {
-          alert("获取微信用户信息失败，请稍候重试");
-          await getOpenid();
-          return;
-        }
-
-        // 计算总金额
-        const totalAmount = cart.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0,
-        );
-
         const items = cart.map((item) => ({
           productId: item.id,
           title: item.title,
           quantity: item.quantity,
           price: item.price,
         }));
-
         try {
-          // 1. 创建订单
           const res = await fetch(`${BASE_URL}/order`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -690,20 +482,22 @@
               customerName: name,
               customerPhone: phone,
               address,
-              totalAmount: totalAmount,
-              openid: openid, // 订单中携带openid
             }),
           });
-
           const data = await res.json();
           if (res.ok) {
-            const orderId = data.orderId;
-            alert(`订单创建成功！订单号：${orderId}`);
-
-            // 2. 调用微信支付（一键唤起）
-            await handleWxPay(orderId, totalAmount);
+            alert(`订单提交成功！订单号：${data.orderId}`);
+            cart = [];
+            updateCartUI();
+            saveCartToLocal();
+            await loadData();
+            document.getElementById("customerName").value = "";
+            document.getElementById("customerPhone").value = "";
+            document.getElementById("address").value = "";
+            cartSidebar.classList.remove("open");
+            document.body.classList.remove("sidebar-open");
           } else {
-            alert("创建订单失败：" + (data.error || "未知错误"));
+            alert("下单失败：" + (data.error || "未知错误"));
             await loadData();
           }
         } catch (err) {
