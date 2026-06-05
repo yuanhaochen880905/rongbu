@@ -79,7 +79,8 @@
           <button class="category-btn" data-type="type1">加工工艺</button>
           <button class="category-btn" data-type="type2">蕾丝</button>
           <button class="category-btn" data-type="type3">绒布</button>
-          <button class="category-btn" data-type="type4">视频</button>
+          <!-- 隐藏视频分类按钮 -->
+          <button class="category-btn hidden" data-type="type4">视频</button>
         </div>
         <div
           id="productList"
@@ -202,7 +203,7 @@
 
     <script>
       let allProducts = [];
-      let allVideos = [];
+      // 移除视频相关变量
       let currentType = "all";
       let cart = [];
 
@@ -338,63 +339,43 @@
 
       async function refreshProductGrid() {
         let html = "";
-        if (currentType === "type4") {
-          productListDiv.className =
-            "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6";
-          for (const v of allVideos) {
-            html += `
-            <div class="video-card bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden cursor-pointer" onclick="openVideoModal(${v.id})">
-              <div class="relative h-44 w-full">
-                <img src="${v.coverImg}" class="h-full w-full object-cover" alt="${escapeHtml(v.title)}">
-                <div class="absolute inset-0 flex items-center justify-center bg-black/30">
-                  <i class="fa-solid fa-play text-white text-4xl"></i>
-                </div>
-              </div>
-              <div class="p-4">
-                <h3 class="font-bold text-lg mb-1">${escapeHtml(v.title || "视频")}</h3>
-                <p class="text-sm text-gray-600">${escapeHtml(v.intro || "")}</p>
-              </div>
+        // 移除视频相关逻辑
+        productListDiv.className =
+          "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
+        let filtered =
+          currentType === "all"
+            ? allProducts
+            : allProducts.filter((p) => p.type === currentType);
+        for (const p of filtered) {
+          const stockStatus =
+            p.stock > 0
+              ? `<span class="text-green-600 text-xs">库存 ${p.stock}</span>`
+              : `<span class="text-red-500 text-xs">缺货</span>`;
+          const coverImg =
+            p.images && p.images.length
+              ? p.images[0]
+              : "https://placehold.co/400x300?text=无图";
+          html += `
+          <div class="product-card bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+            <div onclick="openProductModal(${p.id})" class="cursor-pointer">
+              <img src="${coverImg}" class="h-40 w-full object-cover" onerror="this.src='https://placehold.co/400x300?text=无图'">
             </div>
-          `;
-          }
-        } else {
-          productListDiv.className =
-            "grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6";
-          let filtered =
-            currentType === "all"
-              ? allProducts
-              : allProducts.filter((p) => p.type === currentType);
-          for (const p of filtered) {
-            const stockStatus =
-              p.stock > 0
-                ? `<span class="text-green-600 text-xs">库存 ${p.stock}</span>`
-                : `<span class="text-red-500 text-xs">缺货</span>`;
-            const coverImg =
-              p.images && p.images.length
-                ? p.images[0]
-                : "https://placehold.co/400x300?text=无图";
-            html += `
-            <div class="product-card bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+            <div class="p-3 flex-1 flex flex-col">
               <div onclick="openProductModal(${p.id})" class="cursor-pointer">
-                <img src="${coverImg}" class="h-40 w-full object-cover" onerror="this.src='https://placehold.co/400x300?text=无图'">
+                <h3 class="font-bold text-base">${escapeHtml(p.title || "未命名产品")}</h3>
+                <p class="text-xs text-gray-500 line-clamp-1">${escapeHtml(p.intro || "")}</p>
+                <div class="flex justify-between items-center mt-1">
+                  <span class="text-secondary font-bold">${formatPrice(p.price)}</span>
+                  ${stockStatus}
+                </div>
               </div>
-              <div class="p-3 flex-1 flex flex-col">
-                <div onclick="openProductModal(${p.id})" class="cursor-pointer">
-                  <h3 class="font-bold text-base">${escapeHtml(p.title || "未命名产品")}</h3>
-                  <p class="text-xs text-gray-500 line-clamp-1">${escapeHtml(p.intro || "")}</p>
-                  <div class="flex justify-between items-center mt-1">
-                    <span class="text-secondary font-bold">${formatPrice(p.price)}</span>
-                    ${stockStatus}
-                  </div>
-                </div>
-                <div class="mt-3 flex items-center gap-2">
-                  <input type="number" min="1" max="${p.stock}" value="1" class="quantity-input border rounded px-1 py-1 text-sm w-16" data-id="${p.id}" id="qty_${p.id}">
-                  <button class="buy-btn bg-secondary/80 hover:bg-secondary text-white text-sm px-3 py-1 rounded-full transition" data-id="${p.id}" data-stock="${p.stock}">购买</button>
-                </div>
+              <div class="mt-3 flex items-center gap-2">
+                <input type="number" min="1" max="${p.stock}" value="1" class="quantity-input border rounded px-1 py-1 text-sm w-16" data-id="${p.id}" id="qty_${p.id}">
+                <button class="buy-btn bg-secondary/80 hover:bg-secondary text-white text-sm px-3 py-1 rounded-full transition" data-id="${p.id}" data-stock="${p.stock}">购买</button>
               </div>
             </div>
-          `;
-          }
+          </div>
+        `;
         }
         productListDiv.innerHTML = html;
         document.querySelectorAll(".buy-btn").forEach((btn) => {
@@ -436,21 +417,7 @@
         document.body.style.overflow = "hidden";
       }
 
-      function openVideoModal(id) {
-        const video = allVideos.find((v) => v.id === id);
-        if (!video) return;
-        const content = `
-        <h2 class="text-xl font-bold mb-3">${escapeHtml(video.title)}</h2>
-        <p class="mb-4 text-gray-600">${escapeHtml(video.detail || "")}</p>
-        <video controls class="rounded-lg w-full" poster="${video.coverImg}">
-          <source src="${video.videoUrl}" type="video/mp4">
-          浏览器不支持视频播放。
-        </video>
-      `;
-        document.getElementById("modalContent").innerHTML = content;
-        document.getElementById("modal").style.display = "flex";
-        document.body.style.overflow = "hidden";
-      }
+      // 移除openVideoModal函数
 
       function closeModal() {
         document.getElementById("modal").style.display = "none";
@@ -469,19 +436,13 @@
         });
       }
 
+      // 修改后的loadData函数，完全移除视频请求
       async function loadData() {
-        // 视频提前单独请求，不在try里面，404不会进catch
-        fetch(`${BASE_URL}/videos`)
-          .then((res) => res.json())
-          .then((data) => {
-            allVideos = data;
-          })
-          .catch(() => {});
-
         try {
-          let goodsRes = await fetch(`${BASE_URL}/goods/list`);
-          allProducts = await goodsRes.json();
-          refreshProductGrid();
+          // 只保留商品请求，彻底删掉视频fetch
+          let goodsRes = await fetch(`${BASE_URL}/goods/list`)
+          allProducts = await goodsRes.json()
+          refreshProductGrid()
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
             p.price = p.price || 0;
