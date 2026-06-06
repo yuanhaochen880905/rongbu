@@ -139,6 +139,17 @@
       const BASE_URL = "https://admin.zumar.com.cn/api";
       let newProductImages = [];
 
+      // 上传校验方法 - 仅限制大小，取消格式校验
+      function beforeUpload(file) {
+        // 仅限制单张5MB，不限图片后缀(jpg/png/gif/webp/heic全部放行)
+        const isLt5M = file.size / 1024 / 1024 < 5;
+        if (!isLt5M) {
+          Swal.fire("错误", "图片不能超过5MB", "error");
+          return false;
+        }
+        return true;
+      }
+
       function addNewImageUploader(existingUrl = null) {
         const container = document.getElementById("newImagesContainer");
         const idx = container.children.length;
@@ -149,7 +160,7 @@
             <i class="fa-solid fa-cloud-upload-alt text-2xl"></i>
             <p class="text-xs">点击上传</p>
           </div>
-          <input type="file" accept="image/*" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
+          <input type="file" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
           <img id="new_img_${idx}" class="preview-img hidden" style="width:80px;height:80px;display:none">
           <span class="remove-btn" onclick="removeNewImage(this)">×</span>
         `;
@@ -175,6 +186,10 @@
           Swal.fire("提示", "请选择图片文件", "warning");
           return;
         }
+        // 调用上传校验
+        if (!beforeUpload(file)) {
+          return;
+        }
         const formData = new FormData();
         formData.append("file", file);
         try {
@@ -188,7 +203,9 @@
             img.src = data.data;
             img.classList.remove("hidden");
             img.style.display = "block";
-            fileInput.parentElement.querySelector(".upload-area").style.display = "none";
+            fileInput.parentElement.querySelector(
+              ".upload-area",
+            ).style.display = "none";
             newProductImages.push(data.data);
             Swal.fire("成功", "图片已上传", "success");
           } else {
@@ -214,7 +231,16 @@
       async function loadProducts() {
         const res = await fetch(`${BASE_URL}/goods/list`);
         const result = await res.json();
-        const products = result.data || [];
+        // 修复：解析图片JSON字符串为数组
+        let products = result.data || [];
+        products = products.map(item=>{
+          return {
+            ...item,
+            // 数据库img是["url"]字符串，转成真实数组；空数据给空数组防报错
+            images: item.images ? JSON.parse(item.images) : [],
+            img: item.img ? JSON.parse(item.img) : []
+          }
+        })
         const container = document.getElementById("productList");
         container.innerHTML = products
           .map(
@@ -238,6 +264,9 @@
                 <input id="stock_${p.id}" type="number" value="${p.stock}" class="w-full border p-1 rounded">
                 <label class="mt-2">简介</label>
                 <input id="intro_${p.id}" value="${escapeHtml(p.intro)}" class="w-full border p-1 rounded">
+                <!-- 图片预览 - 取数组第一张图，增加错误处理 -->
+                <label class="mt-2">预览</label>
+                <img :src="${p.img[0] || p.images[0]}" width="80" onerror="this.src=''">
               </div>
               <div>
                 <label>详情</label>
@@ -255,7 +284,7 @@
               <input type="hidden" id="images_hidden_${p.id}" value='${JSON.stringify(p.images || [])}'>
             </div>
           </div>
-        `
+        `,
           )
           .join("");
         for (let p of products) {
@@ -276,16 +305,21 @@
           `;
           container.appendChild(div);
         });
-        document.getElementById(`images_hidden_${productId}`).value = JSON.stringify(images);
+        document.getElementById(`images_hidden_${productId}`).value =
+          JSON.stringify(images);
       }
 
       async function addEditImage(productId) {
         const input = document.createElement("input");
         input.type = "file";
-        input.accept = "image/*";
+        // 移除accept属性，取消格式限制
         input.onchange = async (e) => {
           const file = e.target.files[0];
           if (!file) return;
+          // 调用上传校验
+          if (!beforeUpload(file)) {
+            return;
+          }
           const formData = new FormData();
           formData.append("file", file);
           const res = await fetch(`${BASE_URL}/upload`, {
@@ -294,7 +328,9 @@
           });
           const data = await res.json();
           if (res.ok && data.code === 200) {
-            const hidden = document.getElementById(`images_hidden_${productId}`);
+            const hidden = document.getElementById(
+              `images_hidden_${productId}`,
+            );
             let images = JSON.parse(hidden.value || "[]");
             images.push(data.data);
             hidden.value = JSON.stringify(images);
@@ -322,7 +358,9 @@
         const detail = document.getElementById(`detail_${id}`).value;
         const price = parseFloat(document.getElementById(`price_${id}`).value);
         const stock = parseInt(document.getElementById(`stock_${id}`).value);
-        const images = JSON.parse(document.getElementById(`images_hidden_${id}`).value || "[]");
+        const images = JSON.parse(
+          document.getElementById(`images_hidden_${id}`).value || "[]",
+        );
         const res = await fetch(`${BASE_URL}/goods/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -400,8 +438,23 @@
         }
       }
 
+      // 编辑弹窗赋值修复（如果有编辑弹窗，此处是示例，根据实际场景调整）
+      function openEditModal(row) {
+        // 修复：解析图片JSON字符串为数组
+        this.form = {
+          ...row,
+          img: row.img ? JSON.parse(row.img) : [],
+          images: row.images ? JSON.parse(row.images) : []
+        }
+      }
+
       function escapeHtml(str) {
-        return str?.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]) || "";
+        return (
+          str?.replace(
+            /[&<>]/g,
+            (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m],
+          ) || ""
+        );
       }
 
       loadProducts();
@@ -415,6 +468,8 @@
       window.removeNewImage = removeNewImage;
       window.addEditImage = addEditImage;
       window.removeEditImage = removeEditImage;
+      window.beforeUpload = beforeUpload;
+      window.openEditModal = openEditModal;
     </script>
   </body>
 </html>
