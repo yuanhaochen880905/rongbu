@@ -135,33 +135,30 @@
     </div>
 
     <script>
-      // 全局配置 - 替换为你的服务器IP
+      // 全局配置
       const BASE_URL = "https://admin.zumar.com.cn/api";
-      // 全局存储新增产品的图片URL数组
       let newProductImages = [];
 
-      // 为新增产品添加一个图片上传区域
       function addNewImageUploader(existingUrl = null) {
         const container = document.getElementById("newImagesContainer");
         const idx = container.children.length;
         const div = document.createElement("div");
         div.className = "image-item";
         div.innerHTML = `
-        <div class="upload-area w-24 h-24 inline-block" onclick="triggerUpload(this, 'new_img_${idx}')">
-          <i class="fa-solid fa-cloud-upload-alt text-2xl"></i>
-          <p class="text-xs">点击上传</p>
-        </div>
-        <input type="file" accept="image/*" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
-        <img id="new_img_${idx}" class="preview-img hidden" style="width:80px;height:80px;display:none">
-        <span class="remove-btn" onclick="removeNewImage(this)">×</span>
-      `;
+          <div class="upload-area w-24 h-24 inline-block" onclick="triggerUpload(this, 'new_img_${idx}')">
+            <i class="fa-solid fa-cloud-upload-alt text-2xl"></i>
+            <p class="text-xs">点击上传</p>
+          </div>
+          <input type="file" accept="image/*" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
+          <img id="new_img_${idx}" class="preview-img hidden" style="width:80px;height:80px;display:none">
+          <span class="remove-btn" onclick="removeNewImage(this)">×</span>
+        `;
         if (existingUrl) {
           const img = div.querySelector("img");
           img.src = existingUrl;
           img.classList.remove("hidden");
           img.style.display = "block";
           div.querySelector(".upload-area").style.display = "none";
-          // 存储URL
           newProductImages.push(existingUrl);
         }
         container.appendChild(div);
@@ -172,28 +169,34 @@
         input.click();
       }
 
-      // 在 uploadNewImage 函数中，将 data.url 改为 data.data
       async function uploadNewImage(fileInput, imgId) {
         const file = fileInput.files[0];
-        if (!file) return;
+        if (!file) {
+          Swal.fire("提示", "请选择图片文件", "warning");
+          return;
+        }
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch(`${BASE_URL}/upload`, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok) {
-          const img = document.getElementById(imgId);
-          img.src = data.data; // 修改为 data.data
-          img.classList.remove("hidden");
-          img.style.display = "block";
-          fileInput.parentElement.querySelector(".upload-area").style.display =
-            "none";
-          newProductImages.push(data.data); // 修改为 data.data
-          Swal.fire("成功", "图片已上传", "success");
-        } else {
-          Swal.fire("失败", data.error, "error");
+        try {
+          const res = await fetch(`${BASE_URL}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          if (res.ok && data.code === 200) {
+            const img = document.getElementById(imgId);
+            img.src = data.data;
+            img.classList.remove("hidden");
+            img.style.display = "block";
+            fileInput.parentElement.querySelector(".upload-area").style.display = "none";
+            newProductImages.push(data.data);
+            Swal.fire("成功", "图片已上传", "success");
+          } else {
+            Swal.fire("失败", data.msg || "上传失败", "error");
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire("错误", "网络请求失败", "error");
         }
       }
 
@@ -208,56 +211,53 @@
         div.remove();
       }
 
-      // 加载产品列表（支持多图展示）
       async function loadProducts() {
         const res = await fetch(`${BASE_URL}/goods/list`);
-        const products = await res.json();
+        const result = await res.json();
+        const products = result.data || [];
         const container = document.getElementById("productList");
         container.innerHTML = products
           .map(
             (p) => `
-        <div class="border rounded p-4 bg-gray-50" data-id="${p.id}">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label>标题</label>
-              <input id="title_${p.id}" value="${escapeHtml(p.title)}" class="w-full border p-1 rounded">
-              <label class="mt-2">类型</label>
-              <select id="type_${p.id}" class="w-full border p-1 rounded">
-                <option value="type1" ${p.type === "type1" ? "selected" : ""}>加工工艺</option>
-                <option value="type2" ${p.type === "type2" ? "selected" : ""}>蕾丝</option>
-                <option value="type3" ${p.type === "type3" ? "selected" : ""}>绒布</option>
-              </select>
-            </div>
-            <div>
-              <label>价格 (元)</label>
-              <input id="price_${p.id}" type="number" step="0.01" value="${p.price}" class="w-full border p-1 rounded">
-              <label class="mt-2">库存</label>
-              <input id="stock_${p.id}" type="number" value="${p.stock}" class="w-full border p-1 rounded">
-              <label class="mt-2">简介</label>
-              <input id="intro_${p.id}" value="${escapeHtml(p.intro)}" class="w-full border p-1 rounded">
-            </div>
-            <div>
-              <label>详情</label>
-              <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded">${escapeHtml(p.detail)}</textarea>
-              <div class="flex mt-2 gap-2">
-                <button onclick="updateProduct(${p.id})" class="bg-green-500 text-white px-3 py-1 rounded">保存修改</button>
-                <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded">删除产品</button>
+          <div class="border rounded p-4 bg-gray-50" data-id="${p.id}">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label>标题</label>
+                <input id="title_${p.id}" value="${escapeHtml(p.name)}" class="w-full border p-1 rounded">
+                <label class="mt-2">类型</label>
+                <select id="type_${p.id}" class="w-full border p-1 rounded">
+                  <option value="type1" ${p.type === "type1" ? "selected" : ""}>加工工艺</option>
+                  <option value="type2" ${p.type === "type2" ? "selected" : ""}>蕾丝</option>
+                  <option value="type3" ${p.type === "type3" ? "selected" : ""}>绒布</option>
+                </select>
+              </div>
+              <div>
+                <label>价格 (元)</label>
+                <input id="price_${p.id}" type="number" step="0.01" value="${p.price}" class="w-full border p-1 rounded">
+                <label class="mt-2">库存</label>
+                <input id="stock_${p.id}" type="number" value="${p.stock}" class="w-full border p-1 rounded">
+                <label class="mt-2">简介</label>
+                <input id="intro_${p.id}" value="${escapeHtml(p.intro)}" class="w-full border p-1 rounded">
+              </div>
+              <div>
+                <label>详情</label>
+                <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded">${escapeHtml(p.detail)}</textarea>
+                <div class="flex mt-2 gap-2">
+                  <button onclick="updateProduct(${p.id})" class="bg-green-500 text-white px-3 py-1 rounded">保存修改</button>
+                  <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded">删除产品</button>
+                </div>
               </div>
             </div>
+            <div class="mt-3">
+              <label>产品图片</label>
+              <div id="images_${p.id}" class="flex flex-wrap items-center gap-2 mt-1"></div>
+              <button onclick="addEditImage(${p.id})" class="bg-gray-200 text-sm px-2 py-1 rounded mt-1">+ 添加图片</button>
+              <input type="hidden" id="images_hidden_${p.id}" value='${JSON.stringify(p.images || [])}'>
+            </div>
           </div>
-          <!-- 多图管理 -->
-          <div class="mt-3">
-            <label>产品图片</label>
-            <div id="images_${p.id}" class="flex flex-wrap items-center gap-2 mt-1"></div>
-            <button onclick="addEditImage(${p.id})" class="bg-gray-200 text-sm px-2 py-1 rounded mt-1">+ 添加图片</button>
-            <input type="hidden" id="images_hidden_${p.id}" value='${JSON.stringify(p.images || [])}'>
-          </div>
-        </div>
-      `,
+        `
           )
           .join("");
-
-        // 为每个产品渲染图片列表
         for (let p of products) {
           renderProductImages(p.id, p.images || []);
         }
@@ -271,14 +271,12 @@
           const div = document.createElement("div");
           div.className = "image-item";
           div.innerHTML = `
-          <img src="${url}" class="preview-img" style="width:80px;height:80px;object-fit:cover">
-          <span class="remove-btn" onclick="removeEditImage(${productId}, ${idx})">×</span>
-        `;
+            <img src="${url}" class="preview-img" style="width:80px;height:80px;object-fit:cover">
+            <span class="remove-btn" onclick="removeEditImage(${productId}, ${idx})">×</span>
+          `;
           container.appendChild(div);
         });
-        // 更新隐藏字段
-        document.getElementById(`images_hidden_${productId}`).value =
-          JSON.stringify(images);
+        document.getElementById(`images_hidden_${productId}`).value = JSON.stringify(images);
       }
 
       async function addEditImage(productId) {
@@ -295,17 +293,15 @@
             body: formData,
           });
           const data = await res.json();
-          if (res.ok) {
-            const hidden = document.getElementById(
-              `images_hidden_${productId}`,
-            );
+          if (res.ok && data.code === 200) {
+            const hidden = document.getElementById(`images_hidden_${productId}`);
             let images = JSON.parse(hidden.value || "[]");
-            images.push(data.data); // 修改为 data.data
+            images.push(data.data);
             hidden.value = JSON.stringify(images);
             renderProductImages(productId, images);
             Swal.fire("成功", "图片已添加", "success");
           } else {
-            Swal.fire("失败", data.error, "error");
+            Swal.fire("失败", data.msg || "添加失败", "error");
           }
         };
         input.click();
@@ -326,14 +322,12 @@
         const detail = document.getElementById(`detail_${id}`).value;
         const price = parseFloat(document.getElementById(`price_${id}`).value);
         const stock = parseInt(document.getElementById(`stock_${id}`).value);
-        const images = JSON.parse(
-          document.getElementById(`images_hidden_${id}`).value || "[]",
-        );
+        const images = JSON.parse(document.getElementById(`images_hidden_${id}`).value || "[]");
         const res = await fetch(`${BASE_URL}/goods/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title,
+            name: title,
             type,
             intro,
             detail,
@@ -381,7 +375,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title,
+            name: title,
             type,
             intro,
             detail,
@@ -392,7 +386,6 @@
         });
         if (res.ok) {
           Swal.fire("成功", "产品已添加", "success");
-          // 清空表单
           document.getElementById("newTitle").value = "";
           document.getElementById("newIntro").value = "";
           document.getElementById("newDetail").value = "";
@@ -403,23 +396,16 @@
           loadProducts();
         } else {
           const err = await res.json();
-          Swal.fire("失败", err.error, "error");
+          Swal.fire("失败", err.msg || "添加失败", "error");
         }
       }
 
       function escapeHtml(str) {
-        return (
-          str?.replace(
-            /[&<>]/g,
-            (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m],
-          ) || ""
-        );
+        return str?.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]) || "";
       }
 
-      // 初始化加载产品列表
       loadProducts();
 
-      // 暴露全局方法
       window.addProduct = addProduct;
       window.updateProduct = updateProduct;
       window.deleteProduct = deleteProduct;
