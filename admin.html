@@ -231,14 +231,18 @@
       async function loadProducts() {
         const res = await fetch(`${BASE_URL}/goods/list`);
         const result = await res.json();
-        // 修复：解析图片JSON字符串为数组
+        // 修复：解析图片JSON字符串为数组（增加try捕获异常）
         let products = result.data || [];
         products = products.map(item=>{
+          let parseImg = [];
+          try{
+            parseImg = item.img ? JSON.parse(item.img) : [];
+          }catch(e){parseImg=[];}
           return {
             ...item,
-            // 数据库img是["url"]字符串，转成真实数组；空数据给空数组防报错
-            images: item.images ? JSON.parse(item.images) : [],
-            img: item.img ? JSON.parse(item.img) : []
+            img:parseImg,
+            // 保留原有的images解析逻辑，仅修改img的解析方式
+            images: item.images ? JSON.parse(item.images) : []
           }
         })
         const container = document.getElementById("productList");
@@ -266,7 +270,7 @@
                 <input id="intro_${p.id}" value="${escapeHtml(p.intro)}" class="w-full border p-1 rounded">
                 <!-- 图片预览 - 取数组第一张图，增加错误处理 -->
                 <label class="mt-2">预览</label>
-                <img :src="${p.img[0] || p.images[0]}" width="80" onerror="this.src=''">
+                <img src="${p.img[0] || p.images[0]}" width="80" onerror="this.src=''">
               </div>
               <div>
                 <label>详情</label>
@@ -443,9 +447,8 @@
         // 修复：解析图片JSON字符串为数组
         this.form = {
           ...row,
-          img: row.img ? JSON.parse(row.img) : [],
-          images: row.images ? JSON.parse(row.images) : []
-        }
+          img: row.img ? JSON.parse(row.img) : []
+        };
       }
 
       function escapeHtml(str) {
