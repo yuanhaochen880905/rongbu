@@ -21,7 +21,7 @@
             <h1 class="text-3xl font-bold">后台管理</h1>
             <a href="order-manager.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">📋 查看订单</a>
         </div>
-        <p class="text-gray-600 mb-6">管理产品、库存、价格、多张图片（自动上传阿里云OSS）</p>
+        <p class="text-gray-600 mb-6">管理产品、库存、价格、多张图片（自动上传阿里云OSS鞋子文件夹）</p>
 
         <!-- 新增产品表单 -->
         <div class="bg-white p-6 rounded shadow mb-8">
@@ -39,7 +39,7 @@
                 <input type="number" id="newStock" placeholder="库存数量" class="border p-2 rounded"/>
             </div>
             <div class="mt-4">
-                <label class="block font-semibold mb-2">产品图片（可多张）</label>
+                <label class="block font-semibold mb-2">产品图片（可多张，全格式支持）</label>
                 <div id="newImagesContainer" class="flex flex-wrap items-center gap-2"></div>
                 <button type="button" onclick="addNewImageUploader()" class="mt-2 bg-gray-200 px-3 py-1 rounded text-sm">+ 添加图片</button>
             </div>
@@ -57,7 +57,7 @@
       const BASE_URL = "https://admin.zumar.com.cn/api";
       let newProductImages = [];
 
-      // 【修复1：取消格式限制，只限制5MB大小，彻底消除不支持文件类型弹窗】
+      // 取消所有文件格式限制，只限制5MB，彻底消除【不支持文件类型】弹窗
       function beforeUpload(file) {
         const isLt5M = file.size / 1024 / 1024 < 5;
         if (!isLt5M) {
@@ -77,7 +77,7 @@
             <i class="fa-solid fa-cloud-upload-alt text-2xl"></i>
             <p class="text-xs">点击上传</p>
           </div>
-          <input type="file" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
+          <input type="file" style="display:none">
           <img id="new_img_${idx}" class="preview-img hidden" style="width:80px;height:80px;display:none">
           <span class="remove-btn" onclick="removeNewImage(this)">×</span>
         `;
@@ -94,6 +94,7 @@
 
       function triggerUpload(element, imgId) {
         const input = element.nextElementSibling;
+        input.onchange = (e)=>uploadNewImage(input,imgId);
         input.click();
       }
 
@@ -113,12 +114,12 @@
             img.style.display = "block";
             fileInput.parentElement.querySelector(".upload-area").style.display = "none";
             newProductImages.push(data.data);
-            Swal.fire("成功", "图片已上传OSS", "success");
+            Swal.fire("成功", "图片已上传至OSS鞋子文件夹", "success");
           } else {
             Swal.fire("失败", data.msg || "上传失败", "error");
           }
         } catch (err) {
-          Swal.fire("错误", "网络/接口异常", "error");
+          Swal.fire("错误", "接口网络异常", "error");
         }
       }
 
@@ -133,7 +134,7 @@
         div.remove();
       }
 
-      //【修复2：商品列表加载、JSON容错，杜绝products.map报错】
+      // 加载商品：JSON容错解析img
       async function loadProducts() {
         try{
           const res = await fetch(`${BASE_URL}/goods/list`);
@@ -141,10 +142,8 @@
           let rawList = Array.isArray(result.data) ? result.data : [];
           let products = rawList.map(item=>{
             let parseImg = [];
-            let parseImages = [];
             try{ parseImg = item.img ? JSON.parse(item.img) : []; }catch(e){parseImg=[];}
-            try{ parseImages = item.images ? JSON.parse(item.images) : []; }catch(e){parseImages=[];}
-            return {...item,img:parseImg,images:parseImages};
+            return {...item,img:parseImg};
           })
           const container = document.getElementById("productList");
           container.innerHTML = products.map(p=>`
@@ -168,8 +167,8 @@
                   <label class="mt-2">简介</label>
                   <input id="intro_${p.id}" value="${escapeHtml(p.intro)}" class="w-full border p-1 rounded">
                   <label class="mt-2">预览</label>
-                  <!--【修复3：原生html去掉:src，空图兜底】 -->
-                  <img src="${p.img[0]||p.images[0]||''}" width="80" onerror="this.src=''">
+                  <!-- 原生src，无vue语法，空兜底 -->
+                  <img src="${p.img[0]||''}" width="80" onerror="this.src=''">
                 </div>
                 <div>
                   <label>详情</label>
@@ -184,11 +183,11 @@
                 <label>产品图片</label>
                 <div id="images_${p.id}" class="flex flex-wrap items-center gap-2 mt-1"></div>
                 <button onclick="addEditImage(${p.id})" class="bg-gray-200 text-sm px-2 py-1 rounded mt-1">+ 添加图片</button>
-                <input type="hidden" id="images_hidden_${p.id}" value='${JSON.stringify(p.images || [])}'>
+                <input type="hidden" id="images_hidden_${p.id}" value='${JSON.stringify(p.img||[])}'>
               </div>
             </div>
           `).join("");
-          for(let p of products) renderProductImages(p.id,p.images||[]);
+          for(let p of products) renderProductImages(p.id,p.img||[]);
         }catch(e){console.log('加载商品异常',e);}
       }
 
@@ -196,10 +195,10 @@
         const container = document.getElementById(`images_${productId}`);
         if(!container)return;
         container.innerHTML = "";
-        images.forEach(url=>{
+        images.forEach((url,idx)=>{
           const div = document.createElement("div");
           div.className = "image-item";
-          div.innerHTML = `<img src="${url}" class="preview-img" style="width:80px;height:80px;object-fit:cover"><span class="remove-btn" onclick="removeEditImage(${productId},${images.indexOf(url)})">×</span>`;
+          div.innerHTML = `<img src="${url}" class="preview-img" style="width:80px;height:80px;object-fit:cover"><span class="remove-btn" onclick="removeEditImage(${productId},${idx})">×</span>`;
           container.appendChild(div);
         })
         document.getElementById(`images_hidden_${productId}`).value = JSON.stringify(images);
@@ -218,7 +217,7 @@
             const hid = document.getElementById(`images_hidden_${productId}`);
             let arr = JSON.parse(hid.value||"[]");arr.push(d.data);hid.value=JSON.stringify(arr);
             renderProductImages(productId,arr);
-            Swal.fire("成功","图片新增完成","success");
+            Swal.fire("成功","图片存入OSS","success");
           }else Swal.fire("上传失败",d.msg,"error");
         }
         input.click();
@@ -238,7 +237,7 @@
         const price = Number(document.getElementById(`price_${id}`).value);
         const stock = Number(document.getElementById(`stock_${id}`).value);
         const imgs = JSON.parse(document.getElementById(`images_hidden_${id}`).value||"[]");
-        const res = await fetch(`${BASE_URL}/goods/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,type,intro,detail,price,stock,images:imgs,img:JSON.stringify(imgs)})});
+        const res = await fetch(`${BASE_URL}/goods/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,type,intro,detail,price,stock,img:JSON.stringify(imgs)})});
         if(res.ok){Swal.fire("修改成功","","success");loadProducts();}
         else Swal.fire("修改失败","","error");
       }
@@ -259,8 +258,8 @@
         const price = Number(document.getElementById("newPrice").value);
         const stock = Number(document.getElementById("newStock").value);
         const imgs = newProductImages;
-        if(!name||imgs.length<1){Swal.fire("必填项","填名称+上传图片","warning");return;}
-        const res = await fetch(`${BASE_URL}/goods/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,type,intro,detail,price,stock,images:imgs,img:JSON.stringify(imgs)})});
+        if(!name||imgs.length<1){Swal.fire("必填项","填写名称并上传图片","warning");return;}
+        const res = await fetch(`${BASE_URL}/goods/add`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,type,intro,detail,price,stock,img:JSON.stringify(imgs)})});
         if(res.ok){
           Swal.fire("新增成功");
           document.getElementById("newTitle").value="";document.getElementById("newIntro").value="";
@@ -271,7 +270,7 @@
       }
 
       function openEditModal(row){
-        this.form = {...row,img:row.img?JSON.parse(row.img):[],images:row.images?JSON.parse(row.images):[]}
+        this.form = {...row,img:row.img?JSON.parse(row.img):[]}
       }
 
       function escapeHtml(s){
