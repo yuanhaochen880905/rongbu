@@ -172,12 +172,12 @@
         input.click();
       }
 
+      // 在 uploadNewImage 函数中，将 data.url 改为 data.data
       async function uploadNewImage(fileInput, imgId) {
         const file = fileInput.files[0];
         if (!file) return;
         const formData = new FormData();
         formData.append("file", file);
-        // 图片上传接口 - 请确认实际图片上传接口地址，若不同请修改
         const res = await fetch(`${BASE_URL}/upload`, {
           method: "POST",
           body: formData,
@@ -185,13 +185,12 @@
         const data = await res.json();
         if (res.ok) {
           const img = document.getElementById(imgId);
-          img.src = data.url;
+          img.src = data.data; // 修改为 data.data
           img.classList.remove("hidden");
           img.style.display = "block";
           fileInput.parentElement.querySelector(".upload-area").style.display =
             "none";
-          // 存储URL到临时数组
-          newProductImages.push(data.url);
+          newProductImages.push(data.data); // 修改为 data.data
           Swal.fire("成功", "图片已上传", "success");
         } else {
           Swal.fire("失败", data.error, "error");
@@ -291,7 +290,6 @@
           if (!file) return;
           const formData = new FormData();
           formData.append("file", file);
-          // 图片上传接口 - 请确认实际图片上传接口地址，若不同请修改
           const res = await fetch(`${BASE_URL}/upload`, {
             method: "POST",
             body: formData,
@@ -302,7 +300,7 @@
               `images_hidden_${productId}`,
             );
             let images = JSON.parse(hidden.value || "[]");
-            images.push(data.url);
+            images.push(data.data); // 修改为 data.data
             hidden.value = JSON.stringify(images);
             renderProductImages(productId, images);
             Swal.fire("成功", "图片已添加", "success");
