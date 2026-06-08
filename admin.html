@@ -199,9 +199,8 @@
           });
           const data = await res.json();
 
-          // 关键修复：确保正确读取后端返回的URL
-          if (data.code === 200 && data.data) {
-            const imageUrl = data.data;
+          const imageUrl = data?.data || data?.url;
+          if (data?.code === 200 && imageUrl) {
             const img = document.getElementById(imgId);
             img.src = imageUrl;
             img.classList.remove("hidden");
@@ -212,7 +211,12 @@
             newProductImages.push(imageUrl);
             Swal.fire("成功", "图片已上传", "success");
           } else {
-            Swal.fire("上传失败", data.msg || "服务器返回错误", "error");
+            console.error("上传返回异常：", data);
+            Swal.fire(
+              "上传失败",
+              data?.msg || "服务器返回数据错误，未获取到图片URL",
+              "error",
+            );
           }
         } catch (err) {
           Swal.fire("错误", "网络或服务器异常", "error");
