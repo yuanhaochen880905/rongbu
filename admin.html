@@ -24,9 +24,10 @@
         text-align: center;
         cursor: pointer;
         transition: 0.3s;
+        border-radius: 8px;
       }
       .upload-area:hover {
-        background: #f0f0;
+        background: #f8f8f8;
       }
       .image-item {
         display: inline-block;
@@ -37,7 +38,7 @@
         position: absolute;
         top: -8px;
         right: -8px;
-        background: red;
+        background: #ef4444;
         color: white;
         border-radius: 50%;
         width: 20px;
@@ -46,6 +47,17 @@
         cursor: pointer;
         text-align: center;
         line-height: 20px;
+        border: 1px solid white;
+        transition: background 0.2s;
+      }
+      .image-item .remove-btn:hover {
+        background: #dc2626;
+      }
+      .image-preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
       }
     </style>
   </head>
@@ -55,7 +67,7 @@
         <h1 class="text-3xl font-bold">后台管理</h1>
         <a
           href="order-manager.html"
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >📋 查看订单</a
         >
       </div>
@@ -71,9 +83,9 @@
             type="text"
             id="newTitle"
             placeholder="产品名称"
-            class="border p-2 rounded"
+            class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <select id="newType" class="border p-2 rounded">
+          <select id="newType" class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="type1">加工工艺</option>
             <option value="type2">蕾丝</option>
             <option value="type3">绒布</option>
@@ -82,45 +94,45 @@
             type="text"
             id="newIntro"
             placeholder="简介（如：9.9/y）"
-            class="border p-2 rounded"
+            class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <textarea
             id="newDetail"
             placeholder="详细描述"
             rows="2"
-            class="border p-2 rounded"
+            class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           ></textarea>
           <input
             type="number"
             id="newPrice"
             placeholder="价格（元）"
             step="0.01"
-            class="border p-2 rounded"
+            class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="number"
             id="newStock"
             placeholder="库存数量"
-            class="border p-2 rounded"
+            class="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div class="mt-4">
           <label class="block font-semibold mb-2">产品图片（可多张）</label>
           <div
             id="newImagesContainer"
-            class="flex flex-wrap items-center gap-2"
+            class="image-preview-container"
           ></div>
           <button
             type="button"
             onclick="addNewImageUploader()"
-            class="mt-2 bg-gray-200 px-3 py-1 rounded text-sm"
+            class="mt-2 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300 transition-colors"
           >
             + 添加图片
           </button>
         </div>
         <button
           onclick="addProduct()"
-          class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
         >
           添加产品
         </button>
@@ -142,31 +154,86 @@
         const isLt5M = file.size / 1024 / 1024 < 5;
         const allowType = /\.(jpg|jpeg|png|gif|webp)$/i;
         const isImg = allowType.test(file.name);
+        
         if (!isLt5M) {
-          Swal.fire("错误", "图片不能超过5MB", "error");
+          Swal.fire({
+            icon: "error",
+            title: "错误",
+            text: "图片不能超过5MB",
+            confirmButtonText: "确定"
+          });
           return false;
         }
+        
         if (!isImg) {
-          Swal.fire("错误", "仅支持 jpg/png/gif/webp 格式图片", "error");
+          Swal.fire({
+            icon: "error",
+            title: "错误",
+            text: "仅支持 jpg/png/gif/webp 格式图片",
+            confirmButtonText: "确定"
+          });
           return false;
         }
+        
         return true;
       }
 
+      // 通用文件上传方法
+      async function uploadFileToServer(file) {
+        if (!file || !beforeUpload(file)) return null;
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        try {
+          const res = await fetch(`${BASE_URL}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          
+          const data = await res.json();
+          
+          if (data.code === 200) {
+            return data.data;
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "上传失败",
+              text: data.msg || "服务器返回错误",
+              confirmButtonText: "确定"
+            });
+            return null;
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: "error",
+            title: "网络异常",
+            text: "请检查服务器状态或网络连接",
+            confirmButtonText: "确定"
+          });
+          console.error("文件上传失败:", err);
+          return null;
+        }
+      }
+
+      // 新增产品 - 添加图片上传控件
       function addNewImageUploader(existingUrl = null) {
         const container = document.getElementById("newImagesContainer");
         const idx = container.children.length;
         const div = document.createElement("div");
         div.className = "image-item";
+        
         div.innerHTML = `
-        <div class="upload-area w-24 h-24 inline-block" onclick="triggerUpload(this, 'new_img_${idx}')">
-          <i class="fa-solid fa-cloud-upload-alt text-2xl"></i>
-          <p class="text-xs">点击上传</p>
-        </div>
-        <input type="file" style="display:none" onchange="uploadNewImage(this, 'new_img_${idx}')">
-        <img id="new_img_${idx}" class="preview-img hidden" style="width:80px;height:80px;">
-        <span class="remove-btn" onclick="removeNewImage(this)">×</span>
-      `;
+          <div class="upload-area w-24 h-24 inline-block" onclick="triggerUpload(this, 'new_img_${idx}')">
+            <i class="fa-solid fa-cloud-upload-alt text-2xl text-gray-400"></i>
+            <p class="text-xs text-gray-500 mt-1">点击上传</p>
+          </div>
+          <input type="file" accept="image/*" style="display:none" onchange="handleNewImageUpload(this, 'new_img_${idx}')">
+          <img id="new_img_${idx}" class="preview-img hidden" alt="预览图">
+          <span class="remove-btn" onclick="removeNewImage(this)">×</span>
+        `;
+        
+        // 如果是编辑模式传入已有图片
         if (existingUrl) {
           const img = div.querySelector("img");
           img.src = existingUrl;
@@ -174,56 +241,58 @@
           div.querySelector(".upload-area").style.display = "none";
           newProductImages.push(existingUrl);
         }
+        
         container.appendChild(div);
       }
 
+      // 触发文件选择框
       function triggerUpload(element, imgId) {
         element.nextElementSibling.click();
       }
 
-      // 标准文件上传：仅请求后端接口（无OSS代码、无密钥）
-      async function uploadNewImage(fileInput, imgId) {
+      // 处理新增产品的图片上传
+      async function handleNewImageUpload(fileInput, imgId) {
         const file = fileInput.files[0];
-        if (!file || !beforeUpload(file)) return;
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-          const res = await fetch(`${BASE_URL}/upload`, {
-            method: "POST",
-            body: formData,
+        const imageUrl = await uploadFileToServer(file);
+        
+        if (imageUrl) {
+          const img = document.getElementById(imgId);
+          img.src = imageUrl;
+          img.classList.remove("hidden");
+          fileInput.parentElement.querySelector(".upload-area").style.display = "none";
+          newProductImages.push(imageUrl);
+          
+          Swal.fire({
+            icon: "success",
+            title: "上传成功",
+            text: "图片上传完成",
+            confirmButtonText: "确定",
+            timer: 1500,
+            showConfirmButton: false
           });
-          const data = await res.json();
-          if (data.code === 200) {
-            const imageUrl = data.data;
-            const img = document.getElementById(imgId);
-            img.src = imageUrl;
-            img.classList.remove("hidden");
-            img.style.display = "block";
-            fileInput.parentElement.querySelector(
-              ".upload-area",
-            ).style.display = "none";
-            newProductImages.push(imageUrl);
-            Swal.fire("成功", "图片上传完成", "success");
-          } else {
-            Swal.fire("上传失败", data.msg, "error");
-          }
-        } catch (err) {
-          Swal.fire("网络异常", "请检查服务器状态", "error");
         }
+        
+        // 清空input值，允许重复选择同一文件
+        fileInput.value = "";
       }
 
+      // 移除新增产品的图片
       function removeNewImage(btn) {
         const div = btn.parentElement;
         const img = div.querySelector("img");
+        
         if (img && img.src) {
           const url = img.src;
           const idx = newProductImages.indexOf(url);
-          if (idx > -1) newProductImages.splice(idx, 1);
+          if (idx > -1) {
+            newProductImages.splice(idx, 1);
+          }
         }
+        
         div.remove();
       }
 
-      // 加载商品列表（容错解析图片，杜绝undefined/404）
+      // 加载商品列表
       async function loadProducts() {
         try {
           const res = await fetch(`${BASE_URL}/products`);
@@ -233,214 +302,414 @@
 
           container.innerHTML = products
             .map((p) => {
-              let imgSrc = "";
+              // 安全解析图片数组
+              let productImages = [];
               try {
-                const imgArr = JSON.parse(p.img || "[]");
-                if (Array.isArray(imgArr) && imgArr.length) {
-                  imgSrc = imgArr[0];
-                }
+                productImages = JSON.parse(p.img || "[]");
+                // 过滤无效图片链接
+                productImages = productImages.filter(url => url && typeof url === 'string' && url.trim() !== '');
               } catch (e) {
-                imgSrc = "";
+                productImages = [];
+                console.error(`解析产品${p.id}图片失败:`, e);
               }
+              
+              // 取第一张图作为预览
+              const previewImg = productImages.length > 0 ? productImages[0] : '';
+              
               return `
-            <div class="border rounded p-4 bg-gray-50" data-id="${p.id}">
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label>标题</label>
-                  <input id="title_${p.id}" value="${escapeHtml(p.name)}" class="w-full border p-1 rounded">
-                  <label class="mt-2">类型</label>
-                  <select id="type_${p.id}" class="w-full border p-1 rounded">
-                    <option value="type1" ${p.type === "type1" ? "selected" : ""}>加工工艺</option>
-                    <option value="type2" ${p.type === "type2" ? "selected" : ""}>蕾丝</option>
-                    <option value="type3" ${p.type === "type3" ? "selected" : ""}>绒布</option>
-                  </select>
-                </div>
-                <div>
-                  <label>价格 (元)</label>
-                  <input id="price_${p.id}" type="number" step="0.01" value="${p.price}" class="w-full border p-1 rounded">
-                  <label class="mt-2">库存</label>
-                  <input id="stock_${p.id}" type="number" value="${p.stock}" class="w-full border p-1 rounded">
-                  <label class="mt-2">简介</label>
-                  <input id="intro_${p.id}" value="${escapeHtml(p.intro || "")}" class="w-full border p-1 rounded">
-                  <label class="mt-2">预览</label>
-                  <img src="${imgSrc}" width="80" onerror="this.style.display='none'">
-                </div>
-                <div>
-                  <label>详情</label>
-                  <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded">${escapeHtml(p.detail || "")}</textarea>
-                  <div class="flex mt-2 gap-2">
-                    <button onclick="updateProduct(${p.id})" class="bg-green-500 text-white px-3 py-1 rounded">保存修改</button>
-                    <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded">删除产品</button>
+                <div class="border rounded p-4 bg-gray-50" data-id="${p.id}">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label class="text-sm text-gray-600">标题</label>
+                      <input id="title_${p.id}" value="${escapeHtml(p.name || '')}" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">
+                      
+                      <label class="text-sm text-gray-600 mt-2 block">类型</label>
+                      <select id="type_${p.id}" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">
+                        <option value="type1" ${p.type === "type1" ? "selected" : ""}>加工工艺</option>
+                        <option value="type2" ${p.type === "type2" ? "selected" : ""}>蕾丝</option>
+                        <option value="type3" ${p.type === "type3" ? "selected" : ""}>绒布</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label class="text-sm text-gray-600">价格 (元)</label>
+                      <input id="price_${p.id}" type="number" step="0.01" value="${p.price || 0}" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">
+                      
+                      <label class="text-sm text-gray-600 mt-2 block">库存</label>
+                      <input id="stock_${p.id}" type="number" value="${p.stock || 0}" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">
+                      
+                      <label class="text-sm text-gray-600 mt-2 block">简介</label>
+                      <input id="intro_${p.id}" value="${escapeHtml(p.intro || '')}" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">
+                      
+                      <label class="text-sm text-gray-600 mt-2 block">预览图</label>
+                      <img src="${previewImg}" width="80" class="mt-1 rounded" onerror="this.style.display='none'">
+                    </div>
+                    
+                    <div>
+                      <label class="text-sm text-gray-600">详情</label>
+                      <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 mt-1">${escapeHtml(p.detail || "")}</textarea>
+                      
+                      <!-- 产品图片管理 -->
+                      <label class="text-sm text-gray-600 mt-2 block">产品图片</label>
+                      <div id="images_${p.id}" class="image-preview-container">
+                        ${productImages.map((url, idx) => `
+                          <div class="image-item">
+                            <img src="${url}" class="preview-img" alt="产品图片${idx+1}" onerror="this.parentElement.remove()">
+                            <span class="remove-btn" onclick="removeEditImage(${p.id}, ${idx})">×</span>
+                          </div>
+                        `).join('')}
+                      </div>
+                      <input type="hidden" id="images_hidden_${p.id}" value="${JSON.stringify(productImages)}">
+                      <button type="button" onclick="addEditImage(${p.id})" class="mt-2 bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300 transition-colors">
+                        + 添加图片
+                      </button>
+                      
+                      <div class="flex mt-3 gap-2">
+                        <button onclick="updateProduct(${p.id})" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors">保存修改</button>
+                        <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors">删除产品</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          `;
+              `;
             })
             .join("");
         } catch (e) {
-          console.log("加载商品异常：", e);
+          console.error("加载商品异常：", e);
+          Swal.fire({
+            icon: "error",
+            title: "加载失败",
+            text: "商品列表加载出错，请刷新页面重试",
+            confirmButtonText: "确定"
+          });
         }
       }
 
+      // 渲染编辑产品的图片列表
       function renderProductImages(productId, images) {
+        // 过滤无效图片链接
+        const validImages = images.filter(url => url && typeof url === 'string' && url.trim() !== '');
         const container = document.getElementById(`images_${productId}`);
-        if (!container) return;
-        container.innerHTML = "";
-        images.forEach((url) => {
-          const div = document.createElement("div");
-          div.className = "image-item";
-          div.innerHTML = `<img src="${url}" class="preview-img"><span class="remove-btn" onclick="removeEditImage(${productId},${images.indexOf(url)})">×</span>`;
-          container.appendChild(div);
-        });
-        document.getElementById(`images_hidden_${productId}`).value =
-          JSON.stringify(images);
+        const hiddenInput = document.getElementById(`images_hidden_${productId}`);
+        
+        if (!container || !hiddenInput) return;
+        
+        // 更新隐藏输入框
+        hiddenInput.value = JSON.stringify(validImages);
+        
+        // 渲染图片预览
+        container.innerHTML = validImages.map((url, idx) => `
+          <div class="image-item">
+            <img src="${url}" class="preview-img" alt="产品图片${idx+1}" onerror="this.parentElement.remove()">
+            <span class="remove-btn" onclick="removeEditImage(${productId}, ${idx})">×</span>
+          </div>
+        `).join('');
       }
 
+      // 编辑产品 - 添加新图片
       async function addEditImage(productId) {
         const input = document.createElement("input");
         input.type = "file";
+        input.accept = "image/*";
+        
         input.onchange = async (e) => {
           const file = e.target.files[0];
-          if (!file || !beforeUpload(file)) return;
-          const fd = new FormData();
-          fd.append("file", file);
-          const res = await fetch(`${BASE_URL}/upload`, {
-            method: "POST",
-            body: fd,
-          });
-          const d = await res.json();
-          if (d.code === 200) {
-            let arr = JSON.parse(
-              document.getElementById(`images_hidden_${productId}`).value ||
-                "[]",
-            );
-            arr.push(d.data);
-            document.getElementById(`images_hidden_${productId}`).value =
-              JSON.stringify(arr);
-            renderProductImages(productId, arr);
-            Swal.fire("成功", "图片新增完成", "success");
-          } else {
-            Swal.fire("上传失败", d.msg, "error");
+          const imageUrl = await uploadFileToServer(file);
+          
+          if (imageUrl) {
+            const hiddenInput = document.getElementById(`images_hidden_${productId}`);
+            const currentImages = JSON.parse(hiddenInput.value || "[]");
+            currentImages.push(imageUrl);
+            
+            renderProductImages(productId, currentImages);
+            
+            Swal.fire({
+              icon: "success",
+              title: "添加成功",
+              text: "图片新增完成",
+              confirmButtonText: "确定",
+              timer: 1500,
+              showConfirmButton: false
+            });
           }
+          
+          // 清空input值
+          input.value = "";
         };
+        
         input.click();
       }
 
-      function removeEditImage(pid, idx) {
-        const hid = document.getElementById(`images_hidden_${pid}`);
-        let arr = JSON.parse(hid.value || "[]");
-        arr.splice(idx, 1);
-        hid.value = JSON.stringify(arr);
-        renderProductImages(pid, arr);
+      // 移除编辑产品的图片
+      function removeEditImage(productId, index) {
+        const hiddenInput = document.getElementById(`images_hidden_${productId}`);
+        const currentImages = JSON.parse(hiddenInput.value || "[]");
+        
+        // 删除指定索引的图片
+        currentImages.splice(index, 1);
+        
+        // 重新渲染
+        renderProductImages(productId, currentImages);
+        
+        Swal.fire({
+          icon: "success",
+          title: "已移除",
+          text: "图片已成功删除",
+          confirmButtonText: "确定",
+          timer: 1000,
+          showConfirmButton: false
+        });
       }
 
+      // 更新产品信息
       async function updateProduct(id) {
-        const name = document.getElementById(`title_${id}`).value;
-        const type = document.getElementById(`type_${id}`).value;
-        const intro = document.getElementById(`intro_${id}`).value;
-        const detail = document.getElementById(`detail_${id}`).value;
-        const price = Number(document.getElementById(`price_${id}`).value);
-        const stock = Number(document.getElementById(`stock_${id}`).value);
-        const imgs = JSON.parse(
-          document.getElementById(`images_hidden_${id}`).value || "[]",
-        );
-        const res = await fetch(`${BASE_URL}/goods/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            type,
-            intro,
-            detail,
-            price,
-            stock,
-            img: JSON.stringify(imgs),
-          }),
-        });
-        if (res.ok) {
-          Swal.fire("修改成功", "", "success");
-          loadProducts();
-        } else {
-          Swal.fire("修改失败", "", "error");
+        try {
+          const name = document.getElementById(`title_${id}`).value.trim();
+          const type = document.getElementById(`type_${id}`).value;
+          const intro = document.getElementById(`intro_${id}`).value.trim();
+          const detail = document.getElementById(`detail_${id}`).value.trim();
+          const price = Number(document.getElementById(`price_${id}`).value);
+          const stock = Number(document.getElementById(`stock_${id}`).value);
+          const imagesInput = document.getElementById(`images_hidden_${id}`);
+          const imgs = JSON.parse(imagesInput.value || "[]");
+          
+          // 基本验证
+          if (!name) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "产品名称不能为空",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          if (isNaN(price) || price < 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "请输入有效的价格",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          if (isNaN(stock) || stock < 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "请输入有效的库存数量",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          const res = await fetch(`${BASE_URL}/goods/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              type,
+              intro,
+              detail,
+              price,
+              stock,
+              img: JSON.stringify(imgs),
+            }),
+          });
+          
+          if (res.ok) {
+            Swal.fire({
+              icon: "success",
+              title: "修改成功",
+              text: "产品信息已更新",
+              confirmButtonText: "确定",
+              timer: 1500,
+              showConfirmButton: false
+            });
+            loadProducts();
+          } else {
+            throw new Error("服务器返回错误");
+          }
+        } catch (err) {
+          console.error("更新产品失败:", err);
+          Swal.fire({
+            icon: "error",
+            title: "修改失败",
+            text: "产品信息更新出错，请重试",
+            confirmButtonText: "确定"
+          });
         }
       }
 
+      // 删除产品
       async function deleteProduct(id) {
-        const confirm = await Swal.fire({
+        const result = await Swal.fire({
           title: "确认删除?",
+          text: "此操作不可撤销，删除后产品数据将永久丢失！",
+          icon: "warning",
           showCancelButton: true,
+          confirmButtonColor: "#ef4444",
+          cancelButtonColor: "#6b7280",
+          confirmButtonText: "确认删除",
+          cancelButtonText: "取消"
         });
-        if (confirm.isConfirmed) {
-          await fetch(`${BASE_URL}/goods/${id}`, { method: "DELETE" });
-          Swal.fire("已删除");
-          loadProducts();
+        
+        if (result.isConfirmed) {
+          try {
+            const res = await fetch(`${BASE_URL}/goods/${id}`, { 
+              method: "DELETE" 
+            });
+            
+            if (res.ok) {
+              Swal.fire({
+                icon: "success",
+                title: "已删除",
+                text: "产品已成功删除",
+                confirmButtonText: "确定",
+                timer: 1500,
+                showConfirmButton: false
+              });
+              loadProducts();
+            } else {
+              throw new Error("删除请求失败");
+            }
+          } catch (err) {
+            console.error("删除产品失败:", err);
+            Swal.fire({
+              icon: "error",
+              title: "删除失败",
+              text: "产品删除出错，请重试",
+              confirmButtonText: "确定"
+            });
+          }
         }
       }
 
+      // 添加新产品
       async function addProduct() {
-        const name = document.getElementById("newTitle").value;
-        const type = document.getElementById("newType").value;
-        const intro = document.getElementById("newIntro").value;
-        const detail = document.getElementById("newDetail").value;
-        const price = Number(document.getElementById("newPrice").value);
-        const stock = Number(document.getElementById("newStock").value);
-        const imgs = newProductImages;
-        if (!name || imgs.length < 1) {
-          Swal.fire("必填项", "请填写名称并上传图片", "warning");
-          return;
-        }
-        const res = await fetch(`${BASE_URL}/goods/add`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name,
-            type,
-            intro,
-            detail,
-            price,
-            stock,
-            img: JSON.stringify(imgs),
-          }),
-        });
-        if (res.ok) {
-          Swal.fire("新增成功");
-          // 重置表单
-          document.getElementById("newTitle").value = "";
-          document.getElementById("newIntro").value = "";
-          document.getElementById("newDetail").value = "";
-          document.getElementById("newPrice").value = "";
-          document.getElementById("newStock").value = "";
-          document.getElementById("newImagesContainer").innerHTML = "";
-          newProductImages = [];
-          loadProducts();
-        } else {
-          Swal.fire("新增失败", "", "error");
+        try {
+          const name = document.getElementById("newTitle").value.trim();
+          const type = document.getElementById("newType").value;
+          const intro = document.getElementById("newIntro").value.trim();
+          const detail = document.getElementById("newDetail").value.trim();
+          const price = Number(document.getElementById("newPrice").value);
+          const stock = Number(document.getElementById("newStock").value);
+          const imgs = [...newProductImages]; // 复制数组
+          
+          // 表单验证
+          if (!name) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "产品名称不能为空",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          if (imgs.length === 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "请至少上传一张产品图片",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          if (isNaN(price) || price < 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "请输入有效的价格",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          if (isNaN(stock) || stock < 0) {
+            Swal.fire({
+              icon: "warning",
+              title: "验证失败",
+              text: "请输入有效的库存数量",
+              confirmButtonText: "确定"
+            });
+            return;
+          }
+          
+          const res = await fetch(`${BASE_URL}/goods/add`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name,
+              type,
+              intro,
+              detail,
+              price,
+              stock,
+              img: JSON.stringify(imgs),
+            }),
+          });
+          
+          if (res.ok) {
+            Swal.fire({
+              icon: "success",
+              title: "新增成功",
+              text: "产品已成功添加",
+              confirmButtonText: "确定"
+            });
+            
+            // 重置表单
+            document.getElementById("newTitle").value = "";
+            document.getElementById("newIntro").value = "";
+            document.getElementById("newDetail").value = "";
+            document.getElementById("newPrice").value = "";
+            document.getElementById("newStock").value = "";
+            document.getElementById("newImagesContainer").innerHTML = "";
+            newProductImages = [];
+            
+            // 重新加载产品列表
+            loadProducts();
+          } else {
+            throw new Error("新增请求失败");
+          }
+        } catch (err) {
+          console.error("添加产品失败:", err);
+          Swal.fire({
+            icon: "error",
+            title: "新增失败",
+            text: "产品添加出错，请重试",
+            confirmButtonText: "确定"
+          });
         }
       }
 
+      // HTML转义函数
       function escapeHtml(s) {
         if (!s) return "";
         return s.replace(
           /[&<>]/g,
-          (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m],
+          (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]
         );
       }
 
-      // 页面初始化加载商品
-      loadProducts();
-
-      // 挂载全局方法
-      window.addProduct = addProduct;
-      window.updateProduct = updateProduct;
-      window.deleteProduct = deleteProduct;
-      window.addNewImageUploader = addNewImageUploader;
-      window.triggerUpload = triggerUpload;
-      window.uploadNewImage = uploadNewImage;
-      window.removeNewImage = removeNewImage;
-      window.addEditImage = addEditImage;
-      window.removeEditImage = removeEditImage;
-      window.beforeUpload = beforeUpload;
+      // 页面初始化
+      document.addEventListener('DOMContentLoaded', () => {
+        loadProducts();
+        
+        // 挂载全局方法
+        window.addProduct = addProduct;
+        window.updateProduct = updateProduct;
+        window.deleteProduct = deleteProduct;
+        window.addNewImageUploader = addNewImageUploader;
+        window.triggerUpload = triggerUpload;
+        window.handleNewImageUpload = handleNewImageUpload;
+        window.removeNewImage = removeNewImage;
+        window.addEditImage = addEditImage;
+        window.removeEditImage = removeEditImage;
+        window.beforeUpload = beforeUpload;
+      });
     </script>
   </body>
 </html>
