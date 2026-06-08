@@ -199,7 +199,13 @@
           });
           const data = await res.json();
 
-          const imageUrl = data?.data || data?.url;
+          const imageUrl =
+            data?.data ||
+            data?.url ||
+            data?.data?.url ||
+            data?.fileUrl ||
+            data?.data?.fileUrl;
+
           if (data?.code === 200 && imageUrl) {
             const img = document.getElementById(imgId);
             img.src = imageUrl;
