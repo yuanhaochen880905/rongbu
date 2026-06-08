@@ -134,6 +134,8 @@
     </div>
 
     <script>
+      // ========== 核心修改：替换为你的真实后端接口地址 ==========
+      // 示例：const BASE_URL = "https://你的域名.com/api";
       const BASE_URL = "https://admin.zumar.com.cn/api";
       let newProductImages = [];
 
@@ -221,6 +223,8 @@
       //【修复2：商品列表加载、JSON容错，杜绝products.map报错】
       async function loadProducts() {
         try {
+          // ========== 核心修改：产品列表请求地址 ==========
+          // 此处已基于BASE_URL拼接，你只需修改上方BASE_URL为真实地址即可
           const res = await fetch(`${BASE_URL}/goods/list`);
           const result = await res.json();
           let rawList = Array.isArray(result.data) ? result.data : [];
