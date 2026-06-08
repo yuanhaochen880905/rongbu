@@ -442,8 +442,18 @@
         try {
           let goodsRes = await fetch(`${BASE_URL}/goods/list`);
           let resJson = await goodsRes.json();
-          // 关键：取后端data里的数组
+          // 关键：取后端data里的数组，并解析 img 字段为 images 数组
           allProducts = Array.isArray(resJson.data) ? resJson.data : [];
+          allProducts = allProducts.map((p) => ({
+            ...p,
+            images: (() => {
+              try {
+                return Array.isArray(p.img) ? p.img : JSON.parse(p.img || "[]");
+              } catch {
+                return [];
+              }
+            })(),
+          }));
           refreshProductGrid();
           allProducts.forEach((p) => {
             p.stock = p.stock || 0;
