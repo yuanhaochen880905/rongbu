@@ -192,14 +192,16 @@
           });
           const data = await res.json();
           if (res.ok && data.code === 200) {
+            // 关键修复：从 data.data 里取URL
+            const imageUrl = data.data;
             const img = document.getElementById(imgId);
-            img.src = data.data;
+            img.src = imageUrl;
             img.classList.remove("hidden");
             img.style.display = "block";
             fileInput.parentElement.querySelector(
               ".upload-area",
             ).style.display = "none";
-            newProductImages.push(data.data);
+            newProductImages.push(imageUrl);
             Swal.fire("成功", "图片已上传OSS", "success");
           } else {
             Swal.fire("失败", data.msg || "上传失败", "error");
@@ -230,7 +232,9 @@
           const products = result.data || [];
 
           const container = document.getElementById("productList");
-          container.innerHTML = products.map(p => `
+          container.innerHTML = products
+            .map(
+              (p) => `
             <div class="border rounded p-4 bg-gray-50" data-id="${p.id}">
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -249,13 +253,13 @@
                   <label class="mt-2">库存</label>
                   <input id="stock_${p.id}" type="number" value="${p.stock}" class="w-full border p-1 rounded">
                   <label class="mt-2">简介</label>
-                  <input id="intro_${p.id}" value="${escapeHtml(p.intro || '')}" class="w-full border p-1 rounded">
+                  <input id="intro_${p.id}" value="${escapeHtml(p.intro || "")}" class="w-full border p-1 rounded">
                   <label class="mt-2">预览</label>
-                  <img src="${JSON.parse(p.img || '[]')[0] || ''}" width="80" onerror="this.src=''">
+                  <img src="${JSON.parse(p.img || "[]")[0] || ""}" width="80" onerror="this.src=''">
                 </div>
                 <div>
                   <label>详情</label>
-                  <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded">${escapeHtml(p.detail || '')}</textarea>
+                  <textarea id="detail_${p.id}" rows="2" class="w-full border p-1 rounded">${escapeHtml(p.detail || "")}</textarea>
                   <div class="flex mt-2 gap-2">
                     <button onclick="updateProduct(${p.id})" class="bg-green-500 text-white px-3 py-1 rounded">保存修改</button>
                     <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded">删除产品</button>
@@ -263,7 +267,9 @@
                 </div>
               </div>
             </div>
-          `).join("");
+          `,
+            )
+            .join("");
         } catch (e) {
           console.log("加载商品异常", e);
         }
